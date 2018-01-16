@@ -26,7 +26,8 @@ export zHO=`echo ${F1} | cut -d'-' -f4`
 export zMI=`echo ${F1} | cut -d'-' -f5 | cut -d'.' -f1`
 export zDT="${zYE}-${zMO}-${zDA} ${zHO}:${zMI}"
 
-./GetBCP.sh ${BCP}
+export JSON="${PWD}/${F1}"
+./GetBCP.sh ${JSON}
 exit
 
 # cat ${F1} | tr '\n' ' ' | sed -f sed.sed | sed -e "s/}}/},\"DATE\":\"${zDT}\"}/" > ${BCP}
