@@ -24,10 +24,10 @@ export zMO=`echo ${F1} | cut -d'/' -f2`
 export zDA=`echo ${F1} | cut -d'/' -f3`
 export zHO=`echo ${F1} | cut -d'-' -f4`
 export zMI=`echo ${F1} | cut -d'-' -f5 | cut -d'.' -f1`
-export zDT="${zYE}-${zMO}-${zDA} ${zHO}:${zMI}"
+export zDT="${zYE}-${zMO}-${zDA} ${zHO}:${zMI}:00"
 
 export JSON="${PWD}/${F1}"
-./GetBCP.sh ${JSON}
+./GetBCP.sh ${JSON} "${zDT}"
 exit
 
 # cat ${F1} | tr '\n' ' ' | sed -f sed.sed | sed -e "s/}}/},\"DATE\":\"${zDT}\"}/" > ${BCP}

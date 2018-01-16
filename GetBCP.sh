@@ -3,6 +3,7 @@
 # ./G.sh | tr '\n' ' ' | sed -f sed.sed > bcp
 
 export FILE0=$1
+export ZDATE=$2
 cd /opt/coins/coinmarketcap
 
 export FILE1=/tmp/bcp.1
@@ -42,7 +43,7 @@ do
 
     export SYMBOL=`echo ${L_SYMBOL} | sed -e"s/,//" | cut -'d:' -f2`
 
-    echo "${SYMBOL}:{${L_ID}${L_NAME}${L_SYMBOL}${L_RANK}${L_PRICE_USD}${L_PRICE_BTC}${L_24H_VOLUME_USD}${L_MARKET_CAP_USD}${L_AVAILABLE_SUPPLY}${L_TOTAL_SUPPLY}${L_MAX_SUPPLY}${L_PERCENTAGE_CHANGE_1H}${L_PERCENTAGE_CHANGE_24H}${L_PERCENTAGE_CHANGE_7D}${L_LAST_UPDATED}}," >> ${FILE1}
+    echo "${SYMBOL}:{${L_ID}${L_NAME}${L_SYMBOL}${L_RANK}${L_PRICE_USD}${L_PRICE_BTC}${L_24H_VOLUME_USD}${L_MARKET_CAP_USD}${L_AVAILABLE_SUPPLY}${L_TOTAL_SUPPLY}${L_MAX_SUPPLY}${L_PERCENTAGE_CHANGE_1H}${L_PERCENTAGE_CHANGE_24H}${L_PERCENTAGE_CHANGE_7D}${L_LAST_UPDATED},\"date_actual\":\"${ZDATE}\"}," >> ${FILE1}
 
 done < ${FILE0}
 
