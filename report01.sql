@@ -12,17 +12,32 @@ begin
 
     set cnt = 0;
     -- while cnt < num_keys do
-    while cnt < 10 do
+    while cnt < num_keys do
 
         -- select json_extract(json_keys(x), '$[16]') into @sym from cmc limit 1;
 
-        set @sql = concat("select json_extract(json_keys(x), '$[", cnt, "]') into @symbol from cmc limit 1");
-
+        set @sql = concat("select json_unquote(json_extract(json_keys(x), '$[", cnt, "]')) into @symbol from cmc limit 1;");
         prepare stmt1 from @sql;
         execute stmt1;
         deallocate prepare stmt1;
 
-        select cnt, @symbol;
+        if (@symbol <>    '42') && (@symbol <>   'B@') && (@symbol <>  '$$$') && (@symbol <>   '1ST') &&
+           (@symbol <>   '300') && (@symbol <>  '611') && (@symbol <>  '808') && (@symbol <>   '888') &&
+           (@symbol <>  '10MT') && (@symbol <> '1337') && (@symbol <> '8BIT') && (@symbol <> '2GIVE') &&
+           (@symbol <> '9COIN')
+        then
+            set @sql = concat("select json_unquote(x->'$.", @symbol, ".name') into @name from cmc limit 1;");
+            -- select @sql;
+            prepare stmt1 from @sql;
+            execute stmt1;
+            deallocate prepare stmt1;
+
+            replace into cmc_coin (cmc_symbol, cmc_name) values (@symbol, @name);
+        else
+            set @name = '"Illegal symbol"';
+        end if;
+
+        -- select cnt, @symbol, @name;
         set cnt = cnt + 1;
     end while;
 
