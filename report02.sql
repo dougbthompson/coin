@@ -3,6 +3,26 @@ drop procedure if exists report02;
 delimiter //
 create procedure report02(in zhours int)
 begin
+    declare last_date datetime;
+    declare num_xlm decimal(18.8);
+    declare num_xrp decimal(18.8);
+    declare num_nxt decimal(18.8);
+    declare num_eth decimal(18.8);
+    declare num_sc  decimal(18.8);
+    declare num_bch decimal(18.8);
+    declare num_btc decimal(18.8);
+
+    select max(lst) into last_date from pol;
+
+    select cast(json_unquote(x->'$.STR') as decimal(18,8)) into num_xlm from pol where lst = last_date;
+    select cast(json_unquote(x->'$.XRP') as decimal(18,8)) into num_xrp from pol where lst = last_date;
+    select cast(json_unquote(x->'$.NXT') as decimal(18,8)) into num_nxt from pol where lst = last_date;
+    select cast(json_unquote(x->'$.ETH') as decimal(18,8)) into num_eth from pol where lst = last_date;
+    select cast(json_unquote(x->'$.SC')  as decimal(18,8)) into num_sc  from pol where lst = last_date;
+    select cast(json_unquote(x->'$.BCH') as decimal(18,8)) into num_bch from pol where lst = last_date;
+    select cast(json_unquote(x->'$.BTC') as decimal(18,8)) into num_btc from pol where lst = last_date;
+
+    select num_xlm;
 
     drop table if exists cmc_tmp_values;
 
@@ -20,7 +40,7 @@ begin
            round(json_unquote(x->'$.BTC.price_usd'),4)  as Bitcoin,
 
            round(
-           (cast(json_unquote(x->'$.XLM.price_usd')  as decimal(8,4)) * 400057.0) +
+           (cast(json_unquote(x->'$.XLM.price_usd')  as decimal(8,4)) * num_xlm) +
            (cast(json_unquote(x->'$.XRP.price_usd')  as decimal(8,4)) * 84190.0) +
            (cast(json_unquote(x->'$.NXT.price_usd')  as decimal(8,4)) * 76688.0) +
            (cast(json_unquote(x->'$.ETH.price_usd')  as decimal(8,4)) * 18.1894) +
