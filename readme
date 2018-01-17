@@ -1,0 +1,3 @@
+
+wget "https://coinmarketcap.com/currencies/siacoin/historical-data/?start=20130428&end=20170917"
+
