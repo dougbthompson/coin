@@ -3,18 +3,21 @@ drop procedure if exists report02;
 delimiter //
 create procedure report02(in zhours int)
 begin
-    declare last_date datetime;
-    declare num_drgn decimal(18,8);
-    declare num_xlm  decimal(18.8);
-    declare num_xrp  decimal(18.8);
-    declare num_nxt  decimal(18.8);
-    declare num_eth  decimal(18.8);
-    declare num_sc   decimal(18.8);
-    declare num_bch  decimal(18.8);
-    declare num_btc  decimal(18.8);
+    declare last_date   datetime;
+    declare actual_date integer;
+
+    declare num_drgn    decimal(18,8);
+    declare num_xlm     decimal(18.8);
+    declare num_xrp     decimal(18.8);
+    declare num_nxt     decimal(18.8);
+    declare num_eth     decimal(18.8);
+    declare num_sc      decimal(18.8);
+    declare num_bch     decimal(18.8);
+    declare num_btc     decimal(18.8);
 
     select 19540.0 into num_drgn;
     select max(lst) into last_date from pol;
+    select round(max(unix_timestamp(json_unquote(x->'$.BTC.date_actual'))),0) into actual_date from cmc;
 
     select cast(json_unquote(x->'$.STR') as decimal(18,8)) into num_xlm from pol where lst = last_date;
     select cast(json_unquote(x->'$.XRP') as decimal(18,8)) into num_xrp from pol where lst = last_date;
@@ -62,10 +65,18 @@ begin
       name    varchar(16)   null,
       xmin    decimal(8,4)  null,
       xmax    decimal(8,4)  null,
-      xdif    decimal(8,4)  null);
+      xdif    decimal(8,4)  null,
+      xusd    decimal(8,4)  null);
     
-    insert into cmc_tmp_min_max (symbol, name)
-    select json_unquote(x->'$.DRGN.symbol'), json_unquote(x->'$.DRGN.name') from cmc limit 1;
+    insert into cmc_tmp_min_max (symbol, name, xusd)
+    select json_unquote(x->'$.DRGN.symbol'), json_unquote(x->'$.DRGN.name'), json_unquote(x->'$.DRGN.price_usd')
+      from cmc
+     where round(unix_timestamp(json_unquote(x->'$.DRGN.date_actual')),0) = @actual_date;
+
+    insert into cmc_tmp_min_max (symbol, name, xusd)
+    select json_unquote(x->'$.XLM.symbol'), json_unquote(x->'$.XLM.name'), json_unquote(x->'$.XLM.price_usd')
+      from cmc
+     where round(unix_timestamp(json_unquote(x->'$.XLM.date_actual')),0) = @actual_date;
 
     update cmc_tmp_min_max a, (
            select min(cast(json_unquote(b.x->'$.DRGN.price_usd') as decimal(8,4))) as xmin,
@@ -76,6 +87,16 @@ begin
             where b.lst > from_unixtime((unix_timestamp(now()) - (3600 * 8)))) z
         set a.xmin = z.xmin, a.xmax = z.xmax, a.xdif = z.xdif
       where a.symbol = 'DRGN';
+
+    update cmc_tmp_min_max a, (
+           select min(cast(json_unquote(b.x->'$.XLM.price_usd') as decimal(8,4))) as xmin,
+                  max(cast(json_unquote(b.x->'$.XLM.price_usd') as decimal(8,4))) as xmax,
+                  max(cast(json_unquote(b.x->'$.XLM.price_usd') as decimal(8,4))) -
+                  min(cast(json_unquote(b.x->'$.XLM.price_usd') as decimal(8,4))) as xdif
+             from cmc b
+            where b.lst > from_unixtime((unix_timestamp(now()) - (3600 * 8)))) z
+        set a.xmin = z.xmin, a.xmax = z.xmax, a.xdif = z.xdif
+      where a.symbol = 'XLM';
 
     select * from cmc_tmp_min_max order by symbol;
 
@@ -110,9 +131,6 @@ begin
            MM_SC   = MX_SC   - MN_SC,
            MM_BCH  = MX_BCH  - MN_BCH,
            MM_BTC  = MX_BTC  - MN_BTC;
-
-    select MN_DRGM,   MX_DRGN,   MM_DRGN,   round(MM_DRGN * num_drgn, 2) as 'DIFF_DRGN' from cmc_tmp_minmax;
-    select 'MN_XLM ', 'MX_XLM ', 'MM_XLM ', round(MM_XLM  * num_xlm,  2) as 'DIFF_XLM ' from cmc_tmp_minmax;
 
 end
 //
