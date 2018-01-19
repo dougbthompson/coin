@@ -5,7 +5,7 @@ create procedure report02(in zhours int)
 begin
     declare last_date   datetime;
 
-    select 19540.0 into @num_drgn;
+    select 19540.74618207 into @num_drgn;
     select max(lst) into last_date from pol;
 
     select cast(json_unquote(x->'$.STR') as decimal(18,8)) into @num_xlm from pol where lst = last_date;
@@ -82,38 +82,7 @@ begin
            diff_tot = coins * xdif;
 
     select * from cmc_tmp_min_max order by curr_tot desc;
-
-    drop temporary table if exists cmc_tmp_minmax;
-    create temporary table cmc_tmp_minmax
-    select min(cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8))) as MN_DRGM, 
-           max(cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8))) as MX_DRGN, cast(0.0 as decimal(18,8)) as MM_DRGN,
-           min(cast(json_unquote(x->'$.XLM.price_usd')  as decimal(18,8))) as MN_XLM,  
-           max(cast(json_unquote(x->'$.XLM.price_usd')  as decimal(18,8))) as MX_XLM,  cast(0.0 as decimal(18,8)) as MM_XLM,
-           min(cast(json_unquote(x->'$.XRP.price_usd')  as decimal(18,8))) as MN_XRP,  
-           max(cast(json_unquote(x->'$.XRP.price_usd')  as decimal(18,8))) as MX_XRP,  cast(0.0 as decimal(18,8)) as MM_XRP,
-           min(cast(json_unquote(x->'$.NXT.price_usd')  as decimal(18,8))) as MN_NXT,  
-           max(cast(json_unquote(x->'$.NXT.price_usd')  as decimal(18,8))) as MX_NXT,  cast(0.0 as decimal(18,8)) as MM_NXT,
-           min(cast(json_unquote(x->'$.ETH.price_usd')  as decimal(18,8))) as MN_ETH,  
-           max(cast(json_unquote(x->'$.ETH.price_usd')  as decimal(18,8))) as MX_ETH,  cast(0.0 as decimal(18,8)) as MM_ETH,
-           min(cast(json_unquote(x->'$.SC.price_usd')   as decimal(18,8))) as MN_SC,   
-           max(cast(json_unquote(x->'$.SC.price_usd')   as decimal(18,8))) as MX_SC,   cast(0.0 as decimal(18,8)) as MM_SC,
-           min(cast(json_unquote(x->'$.BCH.price_usd')  as decimal(18,8))) as MN_BCH,  
-           max(cast(json_unquote(x->'$.BCH.price_usd')  as decimal(18,8))) as MX_BCH,  cast(0.0 as decimal(18,8)) as MM_BCH,
-           min(cast(json_unquote(x->'$.BTC.price_usd')  as decimal(18,8))) as MN_BTC,  
-           max(cast(json_unquote(x->'$.BTC.price_usd')  as decimal(18,8))) as MX_BTC,  cast(0.0 as decimal(18,8)) as MM_BTC
-      from cmc 
-     where lst > from_unixtime((unix_timestamp(now()) - (3600 * zhours)))
-     order by lst desc;
-
-    update cmc_tmp_minmax
-       set MM_DRGN = MX_DRGN - MN_DRGM,
-           MM_XLM  = MX_XLM  - MN_XLM,
-           MM_XRP  = MX_XRP  - MN_XRP,
-           MM_NXT  = MX_NXT  - MN_NXT,
-           MM_ETH  = MX_ETH  - MN_ETH,
-           MM_SC   = MX_SC   - MN_SC,
-           MM_BCH  = MX_BCH  - MN_BCH,
-           MM_BTC  = MX_BTC  - MN_BTC;
+    select sum(coins), sum(diff_tot), sum(curr_tot) from cmc_tmp_min_max;
 
 end
 //
