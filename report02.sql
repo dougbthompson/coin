@@ -4,50 +4,39 @@ delimiter //
 create procedure report02(in zhours int)
 begin
     declare last_date   datetime;
-    declare actual_date integer;
 
-    declare num_drgn    decimal(18,8);
-    declare num_xlm     decimal(18.8);
-    declare num_xrp     decimal(18.8);
-    declare num_nxt     decimal(18.8);
-    declare num_eth     decimal(18.8);
-    declare num_sc      decimal(18.8);
-    declare num_bch     decimal(18.8);
-    declare num_btc     decimal(18.8);
-
-    select 19540.0 into num_drgn;
+    select 19540.0 into @num_drgn;
     select max(lst) into last_date from pol;
-    select round(max(unix_timestamp(json_unquote(x->'$.BTC.date_actual'))),0) into actual_date from cmc;
 
-    select cast(json_unquote(x->'$.STR') as decimal(18,8)) into num_xlm from pol where lst = last_date;
-    select cast(json_unquote(x->'$.XRP') as decimal(18,8)) into num_xrp from pol where lst = last_date;
-    select cast(json_unquote(x->'$.NXT') as decimal(18,8)) into num_nxt from pol where lst = last_date;
-    select cast(json_unquote(x->'$.ETH') as decimal(18,8)) into num_eth from pol where lst = last_date;
-    select cast(json_unquote(x->'$.SC')  as decimal(18,8)) into num_sc  from pol where lst = last_date;
-    select cast(json_unquote(x->'$.BCH') as decimal(18,8)) into num_bch from pol where lst = last_date;
-    select cast(json_unquote(x->'$.BTC') as decimal(18,8)) into num_btc from pol where lst = last_date;
+    select cast(json_unquote(x->'$.STR') as decimal(18,8)) into @num_xlm from pol where lst = last_date;
+    select cast(json_unquote(x->'$.XRP') as decimal(18,8)) into @num_xrp from pol where lst = last_date;
+    select cast(json_unquote(x->'$.NXT') as decimal(18,8)) into @num_nxt from pol where lst = last_date;
+    select cast(json_unquote(x->'$.ETH') as decimal(18,8)) into @num_eth from pol where lst = last_date;
+    select cast(json_unquote(x->'$.SC')  as decimal(18,8)) into @num_sc  from pol where lst = last_date;
+    select cast(json_unquote(x->'$.BCH') as decimal(14,8)) into @num_bch from pol where lst = last_date;
+    select cast(json_unquote(x->'$.BTC') as decimal(18,8)) into @num_btc from pol where lst = last_date;
 
     drop temporary table if exists cmc_tmp_values;
     create temporary table cmc_tmp_values
     select json_unquote(x->'$.BTC.date_actual') as 'Date Time',
            round(json_unquote(x->'$.DRGN.price_usd'),4) as 'Dragon___',
-           round((cast(json_unquote(x->'$.DRGN.price_usd') as decimal(8,4)) * num_drgn),2) as DTotal,
+           round((cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8)) * @num_drgn),2) as DTotal,
 
            round(json_unquote(x->'$.XLM.price_usd'),4)  as 'Stellar__',
            round(json_unquote(x->'$.XRP.price_usd'),4)  as 'Ripple___',
            round(json_unquote(x->'$.NXT.price_usd'),4)  as 'Next_____',
            round(json_unquote(x->'$.ETH.price_usd'),4)  as 'Ethereum_',
-           round(json_unquote(x->'$.SC.price_usd'),4)   as 'Siacoin__',
+           round(json_unquote(x->'$.SC.price_usd'), 4)  as 'Siacoin__',
            round(json_unquote(x->'$.BCH.price_usd'),4)  as 'Bit Cash_',
            round(json_unquote(x->'$.BTC.price_usd'),4)  as 'Bitcoin__',
 
            round(
-           (cast(json_unquote(x->'$.XLM.price_usd')  as decimal(8,4)) * num_xlm) +
-           (cast(json_unquote(x->'$.XRP.price_usd')  as decimal(8,4)) * num_xrp) +
-           (cast(json_unquote(x->'$.NXT.price_usd')  as decimal(8,4)) * num_nxt) +
-           (cast(json_unquote(x->'$.ETH.price_usd')  as decimal(8,4)) * num_eth) +
-           (cast(json_unquote(x->'$.SC.price_usd')   as decimal(8,4)) * num_sc)  +
-           (cast(json_unquote(x->'$.BCH.price_usd')  as decimal(8,4)) * num_bch),2) as CTotal,
+           (cast(json_unquote(x->'$.XLM.price_usd')  as decimal(18,8)) * @num_xlm) +
+           (cast(json_unquote(x->'$.XRP.price_usd')  as decimal(18,8)) * @num_xrp) +
+           (cast(json_unquote(x->'$.NXT.price_usd')  as decimal(18,8)) * @num_nxt) +
+           (cast(json_unquote(x->'$.ETH.price_usd')  as decimal(18,8)) * @num_eth) +
+           (cast(json_unquote(x->'$.SC.price_usd')   as decimal(18,8)) * @num_sc)  +
+           (cast(json_unquote(x->'$.BCH.price_usd')  as decimal(18,8)) * @num_bch),2) as CTotal,
            cast(0.0 as decimal(18,2)) as ZTotal
       from cmc
      where lst > from_unixtime((unix_timestamp(now()) - (3600 * zhours)))
@@ -60,64 +49,58 @@ begin
 
     drop temporary table if exists cmc_tmp_min_max;
     create temporary table cmc_tmp_min_max (
-      idx     int auto_increment primary key,
-      symbol  varchar(16)   null,
-      name    varchar(16)   null,
-      xmin    decimal(8,4)  null,
-      xmax    decimal(8,4)  null,
-      xdif    decimal(8,4)  null,
-      xusd    decimal(8,4)  null);
-    
-    insert into cmc_tmp_min_max (symbol, name, xusd)
-    select json_unquote(x->'$.DRGN.symbol'), json_unquote(x->'$.DRGN.name'), json_unquote(x->'$.DRGN.price_usd')
+      idx       int auto_increment primary key,
+      symbol    varchar(16)    null,
+      name      varchar(16)    null,
+      coins     decimal(18,8)  null,
+      xmin      decimal(18,8)  null,
+      xmax      decimal(18,8)  null,
+      xdif      decimal(18,8)  null,
+      diff_tot  decimal(18,8)  null,
+      xusd      decimal(18,8)  null,
+      curr_tot  decimal(18,8)  null);
+
+    select unix_timestamp(json_unquote(x->'$.BTC.date_actual')) into @start_date
       from cmc
-     where round(unix_timestamp(json_unquote(x->'$.DRGN.date_actual')),0) = @actual_date;
+     where unix_timestamp(json_unquote(x->'$.BTC.date_actual')) > (unix_timestamp(now()) - (3600 * zhours))
+     order by unix_timestamp(json_unquote(x->'$.BTC.date_actual'))
+     limit 1;
 
-    insert into cmc_tmp_min_max (symbol, name, xusd)
-    select json_unquote(x->'$.XLM.symbol'), json_unquote(x->'$.XLM.name'), json_unquote(x->'$.XLM.price_usd')
-      from cmc
-     where round(unix_timestamp(json_unquote(x->'$.XLM.date_actual')),0) = @actual_date;
+    select max(json_unquote(x->'$.BTC.date_actual')) into @curr_datetime from cmc limit 1;
 
-    update cmc_tmp_min_max a, (
-           select min(cast(json_unquote(b.x->'$.DRGN.price_usd') as decimal(8,4))) as xmin,
-                  max(cast(json_unquote(b.x->'$.DRGN.price_usd') as decimal(8,4))) as xmax,
-                  max(cast(json_unquote(b.x->'$.DRGN.price_usd') as decimal(8,4))) -
-                  min(cast(json_unquote(b.x->'$.DRGN.price_usd') as decimal(8,4))) as xdif
-             from cmc b
-            where b.lst > from_unixtime((unix_timestamp(now()) - (3600 * 8)))) z
-        set a.xmin = z.xmin, a.xmax = z.xmax, a.xdif = z.xdif
-      where a.symbol = 'DRGN';
+    call proc_store1('DRGN', @start_date, @curr_datetime, @num_drgn);
+    call proc_store1('XLM',  @start_date, @curr_datetime, @num_xlm);
+    call proc_store1('XRP',  @start_date, @curr_datetime, @num_xrp);  
+    call proc_store1('NXT',  @start_date, @curr_datetime, @num_nxt);
+    call proc_store1('SC',   @start_date, @curr_datetime, @num_sc);
+    call proc_store1('ETH',  @start_date, @curr_datetime, @num_eth);
+    call proc_store1('BCH',  @start_date, @curr_datetime, @num_bch);
+    call proc_store1('BTC',  @start_date, @curr_datetime, @num_btc);
 
-    update cmc_tmp_min_max a, (
-           select min(cast(json_unquote(b.x->'$.XLM.price_usd') as decimal(8,4))) as xmin,
-                  max(cast(json_unquote(b.x->'$.XLM.price_usd') as decimal(8,4))) as xmax,
-                  max(cast(json_unquote(b.x->'$.XLM.price_usd') as decimal(8,4))) -
-                  min(cast(json_unquote(b.x->'$.XLM.price_usd') as decimal(8,4))) as xdif
-             from cmc b
-            where b.lst > from_unixtime((unix_timestamp(now()) - (3600 * 8)))) z
-        set a.xmin = z.xmin, a.xmax = z.xmax, a.xdif = z.xdif
-      where a.symbol = 'XLM';
+    update cmc_tmp_min_max
+       set curr_tot = coins * xusd,
+           diff_tot = coins * xdif;
 
-    select * from cmc_tmp_min_max order by symbol;
+    select * from cmc_tmp_min_max order by curr_tot desc;
 
     drop temporary table if exists cmc_tmp_minmax;
     create temporary table cmc_tmp_minmax
-    select min(cast(json_unquote(x->'$.DRGN.price_usd') as decimal(8,4))) as MN_DRGM, 
-           max(cast(json_unquote(x->'$.DRGN.price_usd') as decimal(8,4))) as MX_DRGN, cast(0.0 as decimal(8,4)) as MM_DRGN,
-           min(cast(json_unquote(x->'$.XLM.price_usd')  as decimal(8,4))) as MN_XLM,  
-           max(cast(json_unquote(x->'$.XLM.price_usd')  as decimal(8,4))) as MX_XLM,  cast(0.0 as decimal(8,4)) as MM_XLM,
-           min(cast(json_unquote(x->'$.XRP.price_usd')  as decimal(8,4))) as MN_XRP,  
-           max(cast(json_unquote(x->'$.XRP.price_usd')  as decimal(8,4))) as MX_XRP,  cast(0.0 as decimal(8,4)) as MM_XRP,
-           min(cast(json_unquote(x->'$.NXT.price_usd')  as decimal(8,4))) as MN_NXT,  
-           max(cast(json_unquote(x->'$.NXT.price_usd')  as decimal(8,4))) as MX_NXT,  cast(0.0 as decimal(8,4)) as MM_NXT,
-           min(cast(json_unquote(x->'$.ETH.price_usd')  as decimal(8,4))) as MN_ETH,  
-           max(cast(json_unquote(x->'$.ETH.price_usd')  as decimal(8,4))) as MX_ETH,  cast(0.0 as decimal(8,4)) as MM_ETH,
-           min(cast(json_unquote(x->'$.SC.price_usd')   as decimal(8,4))) as MN_SC,   
-           max(cast(json_unquote(x->'$.SC.price_usd')   as decimal(8,4))) as MX_SC,   cast(0.0 as decimal(8,4)) as MM_SC,
-           min(cast(json_unquote(x->'$.BCH.price_usd')  as decimal(8,4))) as MN_BCH,  
-           max(cast(json_unquote(x->'$.BCH.price_usd')  as decimal(8,4))) as MX_BCH,  cast(0.0 as decimal(8,4)) as MM_BCH,
-           min(cast(json_unquote(x->'$.BTC.price_usd')  as decimal(9,4))) as MN_BTC,  
-           max(cast(json_unquote(x->'$.BTC.price_usd')  as decimal(9,4))) as MX_BTC,  cast(0.0 as decimal(8,4)) as MM_BTC
+    select min(cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8))) as MN_DRGM, 
+           max(cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8))) as MX_DRGN, cast(0.0 as decimal(18,8)) as MM_DRGN,
+           min(cast(json_unquote(x->'$.XLM.price_usd')  as decimal(18,8))) as MN_XLM,  
+           max(cast(json_unquote(x->'$.XLM.price_usd')  as decimal(18,8))) as MX_XLM,  cast(0.0 as decimal(18,8)) as MM_XLM,
+           min(cast(json_unquote(x->'$.XRP.price_usd')  as decimal(18,8))) as MN_XRP,  
+           max(cast(json_unquote(x->'$.XRP.price_usd')  as decimal(18,8))) as MX_XRP,  cast(0.0 as decimal(18,8)) as MM_XRP,
+           min(cast(json_unquote(x->'$.NXT.price_usd')  as decimal(18,8))) as MN_NXT,  
+           max(cast(json_unquote(x->'$.NXT.price_usd')  as decimal(18,8))) as MX_NXT,  cast(0.0 as decimal(18,8)) as MM_NXT,
+           min(cast(json_unquote(x->'$.ETH.price_usd')  as decimal(18,8))) as MN_ETH,  
+           max(cast(json_unquote(x->'$.ETH.price_usd')  as decimal(18,8))) as MX_ETH,  cast(0.0 as decimal(18,8)) as MM_ETH,
+           min(cast(json_unquote(x->'$.SC.price_usd')   as decimal(18,8))) as MN_SC,   
+           max(cast(json_unquote(x->'$.SC.price_usd')   as decimal(18,8))) as MX_SC,   cast(0.0 as decimal(18,8)) as MM_SC,
+           min(cast(json_unquote(x->'$.BCH.price_usd')  as decimal(18,8))) as MN_BCH,  
+           max(cast(json_unquote(x->'$.BCH.price_usd')  as decimal(18,8))) as MX_BCH,  cast(0.0 as decimal(18,8)) as MM_BCH,
+           min(cast(json_unquote(x->'$.BTC.price_usd')  as decimal(18,8))) as MN_BTC,  
+           max(cast(json_unquote(x->'$.BTC.price_usd')  as decimal(18,8))) as MX_BTC,  cast(0.0 as decimal(18,8)) as MM_BTC
       from cmc 
      where lst > from_unixtime((unix_timestamp(now()) - (3600 * zhours)))
      order by lst desc;
@@ -135,5 +118,4 @@ begin
 end
 //
 delimiter ;
-
 
