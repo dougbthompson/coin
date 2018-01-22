@@ -52,10 +52,17 @@ begin
             deallocate prepare stmt1;
 
             select @idx, @symbol;
+            select convert(substring(@symbol,1,1), signed integer) into @symbol_numberic;
+            if @symbol_numberic > 0 then
+                set @idx = @idx + 1;
+                iterate label1;
+            end if;
 
             truncate table js3;
-            if @knt > 0 theh
-              set @sql = concat("")
+            if @knt > 0 then
+              select max(json_unquote(x->'$.BTC.date_actual')) into @max_date_actual from cmc limit 1;
+              set @sql = concat("insert into js3(x) select distinct json_unquote(x->'$.",@symbol,"') from cmc where json_unquote(x->'$.BTC.date_actual') > '",@max_date_actual,"';");
+              select @sql;
             else
               set @sql = concat("insert into js3(x) select distinct json_unquote(x->'$.",@symbol,"') from cmc;");
             end if;
