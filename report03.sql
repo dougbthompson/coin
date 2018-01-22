@@ -1,7 +1,10 @@
 
 -- 
--- note: symbols that start with a number [0-9] are a problem for the
--- json processing functions, so probably need to be ignored, but not yet
+-- report03: this populates the table 'cmc_data' pulling vales from the 'cmc'
+-- table records and populating cmc_data, non-relational to relation storage
+-- 
+-- note: symbols that start with a number [0-9] can be a problem for the
+-- mysql json processing functions, so probably need to be ignored, but not yet
 --
 
 drop procedure if exists report03;
