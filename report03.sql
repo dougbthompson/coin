@@ -1,7 +1,7 @@
 
 -- 
 -- note: symbols that start with a number [0-9] are a problem for the
--- json processing functions, so probably need to be ignored
+-- json processing functions, so probably need to be ignored, but not yet
 --
 
 drop procedure if exists report03;
@@ -50,6 +50,9 @@ begin
             execute stmt1;
             deallocate prepare stmt1;
 
+            update js3 set x = json_set(x, '$.price_usd',          '0.0') where json_unquote(x->'$.price_usd')          = 'null';
+            update js3 set x = json_set(x, '$.price_btc',          '0.0') where json_unquote(x->'$.price_btc')          = 'null';
+            update js3 set x = json_set(x, '$.last_updated',         '0') where json_unquote(x->'$.last_updated')       = 'null';
             update js3 set x = json_set(x, '$.volume_usd_24h',     '0.0') where json_unquote(x->'$.volume_usd_24h')     = 'null';
             update js3 set x = json_set(x, '$.percent_change_1h',  '0.0') where json_unquote(x->'$.percent_change_1h')  = 'null';
             update js3 set x = json_set(x, '$.percent_change_24h', '0.0') where json_unquote(x->'$.percent_change_24h') = 'null';
