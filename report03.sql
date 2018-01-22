@@ -40,7 +40,7 @@ begin
         if @idx = @xlength then
             leave label1;
         else -- the list of symbols
-            set @sql = concat("select json_extract(x, '$[",@idx,"]') into @symbol from js;");
+            set @sql = concat("select json_unquote(json_extract(x, '$[",@idx,"]')) into @symbol from js;");
             prepare stmt1 from @sql;
             execute stmt1;
             deallocate prepare stmt1;
