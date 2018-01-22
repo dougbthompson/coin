@@ -6,6 +6,11 @@
 -- note: symbols that start with a number [0-9] can be a problem for the
 -- mysql json processing functions, so probably need to be ignored, but not yet
 --
+-- subsequent runs, to add new data to the cmc_data table
+-- 1) check for data in the cmc_data table, extract the max(x->'$.BTC.date_actual') value
+-- 2) inserts into js3 will be based on the existing max(date_actual) value
+--    modify the ks3 insert code for > max(date_actual) value
+--
 
 drop procedure if exists report03;
 delimiter //
@@ -30,7 +35,8 @@ begin
 
     -- scroll through the list of 1418 symbols
     set @idx = 0;
-    -- set @xlength = 10;
+
+    select count(1) into @knt from cmc_data;
 
     truncate table js3;
     truncate table cmc_data;
@@ -48,7 +54,11 @@ begin
             select @idx, @symbol;
 
             truncate table js3;
-            set @sql = concat("insert into js3(x) select distinct json_unquote(x->'$.",@symbol,"') from cmc;");
+            if @knt > 0 theh
+              set @sql = concat("")
+            else
+              set @sql = concat("insert into js3(x) select distinct json_unquote(x->'$.",@symbol,"') from cmc;");
+            end if;
             prepare stmt1 from @sql;
             execute stmt1;
             deallocate prepare stmt1;
