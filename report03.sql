@@ -35,6 +35,7 @@ begin
 
     -- scroll through the list of 1418 symbols
     set @idx = 0;
+    -- set @xlength = 20;
 
     truncate table js3;
     -- truncate table cmc_data;
@@ -50,7 +51,7 @@ begin
             execute stmt1;
             deallocate prepare stmt1;
 
-            select locate('@', @symbol) into @symbol_locate;
+            select locate('@', @symbol)+locate('$', @symbol) into @symbol_locate;
             select convert(substring(@symbol,1,1), signed integer) into @symbol_numberic;
 
             select @idx, @symbol, @symbol_locate, @symbol_numberic;
@@ -61,7 +62,18 @@ begin
 
             truncate table js3;
             if @knt > 0 then
-              select max(json_unquote(x->'$.BTC.date_actual')) into @max_date_actual from cmc limit 1;
+              set @sql = concat("select cmc_coin_id into @cmc_coin_id from cmc_coin where cmc_symbol = '",@symbol,"';");
+              prepare stmt1 from @sql;
+              execute stmt1;
+              deallocate prepare stmt1;
+
+              set @sql = concat("select max(last_actual_dt) into @max_date_actual from cmc_data where cmc_coin_id = ",@cmc_coin_id," limit 1;");
+              prepare stmt1 from @sql;
+              execute stmt1;
+              deallocate prepare stmt1;
+
+select @symbol, @cmc_coin_id, @max_date_actual, @sql;
+
               set @sql = concat("insert into js3(x) select distinct json_unquote(x->'$.",@symbol,"') from cmc where json_unquote(x->'$.BTC.date_actual') > '",@max_date_actual,"';");
               -- select @sql;
             else
