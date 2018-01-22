@@ -36,10 +36,9 @@ begin
     -- scroll through the list of 1418 symbols
     set @idx = 0;
 
-    select count(1) into @knt from cmc_data;
-
     truncate table js3;
-    truncate table cmc_data;
+    -- truncate table cmc_data;
+    select count(1) into @knt from cmc_data;
 
     label1: loop
 
@@ -51,9 +50,11 @@ begin
             execute stmt1;
             deallocate prepare stmt1;
 
-            select @idx, @symbol;
+            select locate('@', @symbol) into @symbol_locate;
             select convert(substring(@symbol,1,1), signed integer) into @symbol_numberic;
-            if @symbol_numberic > 0 then
+
+            select @idx, @symbol, @symbol_locate, @symbol_numberic;
+            if @symbol_numberic > 0 or @symbol_locate > 0 then
                 set @idx = @idx + 1;
                 iterate label1;
             end if;
@@ -62,7 +63,7 @@ begin
             if @knt > 0 then
               select max(json_unquote(x->'$.BTC.date_actual')) into @max_date_actual from cmc limit 1;
               set @sql = concat("insert into js3(x) select distinct json_unquote(x->'$.",@symbol,"') from cmc where json_unquote(x->'$.BTC.date_actual') > '",@max_date_actual,"';");
-              select @sql;
+              -- select @sql;
             else
               set @sql = concat("insert into js3(x) select distinct json_unquote(x->'$.",@symbol,"') from cmc;");
             end if;
