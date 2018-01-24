@@ -8,7 +8,7 @@
 
 drop procedure if exists report04;
 delimiter //
-create procedure report04()
+create procedure report04(in volume_usd_24h double precision, in volumn_ratio double precision)
 begin
 
     create temporary table tmp1
