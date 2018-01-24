@@ -45,7 +45,7 @@ begin
     update cmc_tmp_values
        set ZTotal = DTotal + CTotal;
 
-    select * from cmc_tmp_values order by 1 desc limit 12;
+    select * from cmc_tmp_values order by 1 desc limit 24;
 
     drop temporary table if exists cmc_tmp_min_max;
     create temporary table cmc_tmp_min_max (
