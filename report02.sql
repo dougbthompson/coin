@@ -1,4 +1,6 @@
 
+-- echo -ne "\e[1;32;44m Hello, World! \e[m \n"
+
 drop procedure if exists report02;
 delimiter //
 create procedure report02(in zhours int)
