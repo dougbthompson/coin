@@ -71,4 +71,3 @@ select a.cmc_coin_id as ID,
 select * from tmp3 order by PUSD limit 32;
 select * from tmp3 where VOLRatio < 12.0 order by PUSD limit 32;
 
-
