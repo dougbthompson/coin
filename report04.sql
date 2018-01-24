@@ -8,7 +8,7 @@
 
 drop procedure if exists report04;
 delimiter //
-create procedure report04(in zhours int)
+create procedure report04()
 begin
 
 create temporary table tmp1
