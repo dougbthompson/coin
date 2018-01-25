@@ -34,3 +34,11 @@ select round(sum(volume_usd_24h/1000000.0),2) as TradeB,
    and last_actual_dt  < '2018-01-17 14:15:00'
    and cmc_coin_id     = 146;
 
+select min(last_actual_dt),
+       cast(unix_timestamp(min(last_actual_dt)) as unsigned)
+  from cmc_data
+ where cmc_coin_id = (
+       select cmc_coin_id
+         from cmc_coin
+         where cmc_symbol = 'BTC');
+
