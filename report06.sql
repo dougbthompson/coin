@@ -10,12 +10,42 @@ create table cmc_baseline (
     delta        json,     -- {"H01":"-1.27","H04":"-2.46","H08":"1.01","H16":"4.35","H32":"8.27"}
     index ix01_cmc_baseline (cmc_coin_id, cmc_run_lst)
 ) engine = innodb;
-
 create table cmc_beta (
     cmc_coin_id  integer,
     cmc_
 ) engine = innodb;
 
+drop procedure if exists report06;
+delimiter //
+create procedure report06()
+begin
+
+    -- determine start of time periods
+    select cast(unix_timestamp(min(last_actual_dt)) as unsigned) into @first_time_period
+      from cmc_data
+     where cmc_coin_id = (
+           select cmc_coin_id
+             from cmc_coin
+             where cmc_symbol = 'BTC');
+
+    -- list of available time periods
+    drop temporary table if exists cmc_time;
+    create temporary table cmc_time 
+    select cast(unix_timestamp(last_actual_dt) as unsigned) actual_lst,
+           last_actual_dt as actual_dt
+      from cmc_data
+     where cmc_coin_id = (
+           select cmc_coin_id
+             from cmc_coin
+            where cmc_symbol = 'BTC')
+      order by last_actual_dt;
+
+    alter table cmc_time add index ix01_cmc_time (actual_lst, actual_dt);
+    alter table cmc_time add index ix02_cmc_time (actual_dt, actual_lst);
+
+end
+//
+delimiter ;
 
 -- single time period average for BTC = 146
 select round(sum(volume_usd_24h/1000000.0),2) as TradeB,
@@ -36,20 +66,4 @@ select round(sum(volume_usd_24h/1000000.0),2) as TradeB,
    and last_actual_dt  < '2018-01-17 14:15:00'
    and cmc_coin_id     = 146;
 
--- just a test to determine start of time periods
-select min(last_actual_dt),
-       cast(unix_timestamp(min(last_actual_dt)) as unsigned)
-  from cmc_data
- where cmc_coin_id = (
-       select cmc_coin_id
-         from cmc_coin
-         where cmc_symbol = 'BTC');
-
--- list of available time periods
-select cast(unix_timestamp(last_actual_dt) as unsigned)
-  from cmc_data
- where cmc_coin_id = (
-       select cmc_coin_id
-         from cmc_coin
-        where cmc_symbol = 'BTC');
 
