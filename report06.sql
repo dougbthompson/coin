@@ -1,6 +1,6 @@
 
 --
--- report on "beta" with bitcoin, ethereum, top 100 marketcap coins
+-- report on "beta", correlation with bitcoin, ethereum, top 100 marketcap coins
 --
 
 create table cmc_baseline (
@@ -12,7 +12,7 @@ create table cmc_baseline (
 ) engine = innodb;
 
 create table cmc_beta (
-    cmc_coin_id   integer,
+    cmc_coin_id  integer,
     cmc_
 ) engine = innodb;
 
@@ -52,5 +52,4 @@ select cast(unix_timestamp(last_actual_dt) as unsigned)
        select cmc_coin_id
          from cmc_coin
         where cmc_symbol = 'BTC');
-
 
