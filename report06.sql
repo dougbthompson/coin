@@ -25,3 +25,12 @@ select round(sum(volume_usd_24h/1000000.0),2) as TradeB,
  where last_actual_dt  = '2018-01-16 14:15:00'
    and rank           <= 100;
 
+select round(sum(volume_usd_24h/1000000.0),2) as TradeB,
+       round(avg(pc_1h),2)  as PC01H,
+       round(avg(pc_24h),2) as PC24H,
+       round(avg(pc_7d),2)  as PC07D, sum(rank)
+  from cmc_data
+ where last_actual_dt >= '2018-01-16 14:15:00'
+   and last_actual_dt  < '2018-01-17 14:15:00'
+   and cmc_coin_id     = 146;
+
