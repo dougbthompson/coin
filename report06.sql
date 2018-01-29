@@ -71,9 +71,13 @@ begin
      group by a.last_actual_ts
      limit 8;
 
+    select cmc_coin_id into @dbt100 from cmc_coin where cmc_symbol = 'DBT100';
+
+    # cmc_correlation_hour.nhour
+
     truncate table js4;
     insert into js4 (x)
-    select cast(z.json_value as json)
+    select z.last_actual_ts, cast(z.json_value as json)
       from (
         select a.last_actual_ts,
                json_object('_VOLUME', round(sum(a.volume_usd_24h/1000000.0),2),
@@ -85,8 +89,8 @@ begin
          group by a.last_actual_ts) as z
 
     -- this needs to be against all time periods, stored in cmc_time?
-    -- calc DBT100B index value for last time target
-    select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0) as DBT100B
+    -- calc DBT100 index value for last time target
+    select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0) as DBT100
       from cmc_data a
      where a.rank           <= 100
        and a.last_actual_ts  = @max_time_period;
@@ -184,13 +188,13 @@ select sum(a.price_uds)
 
 
 select '2018-01-16 00:00:00' into @actual_dt;
-select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0) as DBT100B
+select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0) as DBT100
   from cmc_data a
  where a.rank           < 101
    and a.last_actual_dt = @actual_dt;
 
 +--------------------+
-| DBT100T            |
+| DBT100             |
 +--------------------+
 | 184012.29455430064 |
 +--------------------+
