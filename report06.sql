@@ -1,20 +1,23 @@
 
+:wq
+
 --
 -- report on "beta", correlation with bitcoin, ethereum, top 100 marketcap coins
 --
 
-create table cmc_baseline (
-    cmc_coin_id  integer,  -- bitcoin, ethereum, dbt100
-    cmc_run_dt   datetime,
-    cmc_run_lst  integer,
-    delta        json,     -- {"H01":"-1.27","H04":"-2.46","H08":"1.01","H16":"4.35","H32":"8.27"}
-    index ix01_cmc_baseline (cmc_coin_id, cmc_run_lst)
-) engine = innodb;
+-- created 2018-01-26 11:00
+-- create table cmc_baseline (
+--     cmc_coin_id  integer,  -- bitcoin, ethereum, dbt100
+--     cmc_run_dt   datetime,
+--     cmc_run_lst  integer,
+--     delta        json,     -- {"H01":"-1.27","H04":"-2.46","H08":"1.01","H16":"4.35","H32":"8.27"}
+--     index ix01_cmc_baseline (cmc_coin_id, cmc_run_lst)
+-- ) engine = innodb;
 
-create table cmc_beta (
-    cmc_coin_id  integer,
-    cmc_
-) engine = innodb;
+-- create table cmc_beta (
+--     cmc_coin_id  integer,
+--     cmc_
+-- ) engine = innodb;
 
 drop procedure if exists report06;
 delimiter //
