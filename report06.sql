@@ -76,7 +76,7 @@ begin
     select cast(z.json_value as json)
       from (
         select a.last_actual_ts,
-               json_object('VOLUME', round(sum(a.volume_usd_24h/1000000.0),2),
+               json_object('_VOLUME', round(sum(a.volume_usd_24h/1000000.0),2),
                            'PC01H', round(avg(pc_1h),2)
                ) as json_value
           from cmc_data a, cmc_time b
