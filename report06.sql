@@ -35,8 +35,8 @@ begin
     -- list of available time periods
     drop temporary table if exists cmc_time;
     create temporary table cmc_time 
-    select cast(unix_timestamp(last_actual_dt) as unsigned) actual_lst,
-           last_actual_dt as actual_dt,
+    select last_actual_dt,
+           last_actual_ts,
            0 as cmc_coin_id,
            cast('{"":""}' as json) as x
       from cmc_data
