@@ -23,7 +23,9 @@ create procedure report06()
 begin
 
     -- determine start of time periods
-    select cast(unix_timestamp(min(last_actual_dt)) as unsigned) into @first_time_period
+    select cast(unix_timestamp(min(last_actual_dt)) as unsigned), 
+           cast(unix_timestamp(max(last_actual_dt)) as unsigned)
+      into @first_time_period, @max_time_period
       from cmc_data
      where cmc_coin_id = (
            select cmc_coin_id
