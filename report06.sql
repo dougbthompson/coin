@@ -37,7 +37,8 @@ begin
     create temporary table cmc_time 
     select cast(unix_timestamp(last_actual_dt) as unsigned) actual_lst,
            last_actual_dt as actual_dt,
-           0 as cmc_coin_id
+           0 as cmc_coin_id,
+           cast('{"":""}' as json) as x
       from cmc_data
      where cmc_coin_id = (
            select cmc_coin_id
@@ -48,18 +49,52 @@ begin
     alter table cmc_time add index ix01_cmc_time (actual_lst, actual_dt);
     alter table cmc_time add index ix02_cmc_time (actual_dt, actual_lst);
 
+    -- this needs to be against all time periods, stored in cmc_time?
+    -- single time period averages for the top 100 values
+    select a.last_actual_ts,
+           round(sum(a.volume_usd_24h/1000000.0),2) as TradeB,
+           round(avg(a.pc_1h),2)  as PC01H,
+           round(avg(a.pc_24h),2) as PC24H,
+           round(avg(a.pc_7d),2)  as PC07D
+      from cmc_data a, cmc_time b
+     where a.last_actual_ts  = b.actual_lst
+       and a.rank           <= 100
+     group by a.last_actual_ts;
+
+    select a.last_actual_ts,
+           json_object('VOLUME', round(sum(a.volume_usd_24h/1000000.0),2),
+                       'PC01H', round(avg(pc_1h),2)
+           ) as json_value
+      from cmc_data a, cmc_time b
+     where a.last_actual_ts  = b.actual_lst
+       and a.rank           <= 100
+     group by a.last_actual_ts
+     limit 8;
+
+    truncate table js4;
+    insert into js4 (x)
+    select cast(z.json_value as json)
+      from (
+        select a.last_actual_ts,
+               json_object('VOLUME', round(sum(a.volume_usd_24h/1000000.0),2),
+                           'PC01H', round(avg(pc_1h),2)
+               ) as json_value
+          from cmc_data a, cmc_time b
+         where a.last_actual_ts  = b.actual_lst
+           and a.rank           <= 100
+         group by a.last_actual_ts) as z
+
+    -- this needs to be against all time periods, stored in cmc_time?
+    -- calc DBT100B index value for last time target
+    select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0) as DBT100B
+      from cmc_data a
+     where a.rank           <= 100
+       and a.last_actual_ts  = @max_time_period;
+
 end
 //
 delimiter ;
 
--- single time period average for BTC = 146
-select round(sum(volume_usd_24h/1000000.0),2) as TradeB,
-       round(avg(pc_1h),2)  as PC01H,
-       round(avg(pc_24h),2) as PC24H,
-       round(avg(pc_7d),2)  as PC07D
-  from cmc_data
- where last_actual_dt  = '2018-01-16 14:15:00'
-   and rank           <= 100;
 
 -- one day average for BTC = 146
 select round(sum(volume_usd_24h/1000000.0),2) as TradeB,
@@ -70,6 +105,9 @@ select round(sum(volume_usd_24h/1000000.0),2) as TradeB,
  where last_actual_dt >= '2018-01-16 14:15:00'
    and last_actual_dt  < '2018-01-17 14:15:00'
    and cmc_coin_id     = 146;
+
+update cmc_time
+   set x = 
 
 insert into xjson(x)
 values ('{"D001H":"1", "D004H":"4", "D008H":"8", "D016H":"16", "D032H":"32",
