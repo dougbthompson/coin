@@ -14,7 +14,6 @@ end
 
 delimiter ;
 
-    cmc_correlation_hour.nhour
 
     select a.last_actual_ts,
            json_object('VOLUME', round(sum(a.volume_usd_24h/1000000.0),2),
