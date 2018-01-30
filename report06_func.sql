@@ -7,6 +7,7 @@ returns varchar(1024)
 begin
 
     select 'return value' into @rvalue;
+    cmc_correlation_hour.nhour
 
     return @rvalue;
 end 
