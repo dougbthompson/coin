@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#
 cd /opt/coins/icos
 
 export DT=`date "+%Y-%m-%d-%H-%M"`
