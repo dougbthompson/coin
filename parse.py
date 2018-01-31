@@ -28,13 +28,20 @@ def get_goal(tag):
 
 def get_interest(tag):
     if len(tag.contents[1].contents[0].split('\t')) == 1:
-        return u'Not Rated'
+       if len(tag.contents[1].contents[0].split('\n')) == 2:
+           x1 = tag.contents[1].contents[0].split('\n')
+           return x1[1]
+       else:
+           return u'Not Rated'
     if len(tag.contents[1].contents[0].split('\t')) == 9:
         x1 = tag.contents[1].contents[0].split('\t')
         return x1[4]
 
 file_name = sys.argv[1]
-print(file_name)
+date_time = sys.argv[2]
+date_ts   = sys.argv[3]
+
+# print(file_name, date_time, date_ts)
 
 raw_data = open(file_name, 'r')
 soup = BeautifulSoup(raw_data, 'html.parser')
@@ -49,25 +56,25 @@ cty_tags = soup.find_all('div', 'categ_type')
 cnx = mysql.connector.connect(user='root', database='coins')
 cursor = cnx.cursor()
 
-insert_entry = ("insert into ico_entry "
-                "(c_name, c_type, c_goal, c_description, c_interest) "
-                "values (%s, %s, %s, %s, %s)")
+insert_entry = ("replace into ico_entry "
+                "(c_dt, c_ts, c_name, c_type, c_goal, c_description, c_interest) "
+                "values (%s, %s, %s, %s, %s, %s, %s)")
 
 for i in range(len(icn_tags)):
-    print(i),
-    print(hrf_tags[i].contents[0]),
-    print("-"),
-    print(icn_tags[i].contents[0]),
-    print("-"),
-    print(get_goal(gic_tags[i])),
-    print("-"),
-    print(cds_tags[i].contents[0]),
-    print("-"),
-    print(get_interest(int_tags[i])),
-    print("-"),
-    print(cty_tags[i].contents[0])
-    data_entry = (str(hrf_tags[i].contents[0]), str(icn_tags[i].contents[0]), str(get_goal(gic_tags[i])),
-                  str(cds_tags[i].contents[0]), str(get_interest(int_tags[i])))
+#    print(i),
+#    print(hrf_tags[i].contents[0]),
+#    print("-"),
+#    print(icn_tags[i].contents[0]),
+#    print("-"),
+#    print(get_goal(gic_tags[i])),
+#    print("-"),
+#    print(cds_tags[i].contents[0]),
+#    print("-"),
+#    print(get_interest(int_tags[i])),
+#    print("-"),
+#    print(cty_tags[i].contents[0])
+    data_entry = (str(date_time), date_ts, str(hrf_tags[i].contents[0]), str(icn_tags[i].contents[0]),
+                  str(get_goal(gic_tags[i])), str(cds_tags[i].contents[0]), str(get_interest(int_tags[i])))
     cursor.execute(insert_entry, data_entry)
     cnx.commit()
 
