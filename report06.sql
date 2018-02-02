@@ -1,5 +1,6 @@
 
 --
+--
 -- report on "beta", correlation with bitcoin, ethereum, top 100 marketcap coins
 --
 
