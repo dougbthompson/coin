@@ -80,6 +80,19 @@ begin
      order by a.pc_24h desc
      limit 128;
 
+    select ID as 'ID___',
+           Symbol as 'Symbol_',
+           CoinName 'CoinName____________________',
+           H1 as 'H1____',
+           H24 as 'H24___',
+           D7 as 'D7_____',
+           VOL as 'VOL_______',
+           PBTC as 'PBTC_______',
+           PUSD as 'PUSD_______',
+           50AMT_K as '50AMT_K_',
+           VOLRatio as 'VOLRatio___'
+    from tmp3 order by PUSD limit 32;
+
     select * from tmp3 order by PUSD limit 32;
     select * from tmp3 where VOLRatio < 12.0 order by PUSD limit 32;
 
