@@ -6,7 +6,7 @@ select a.cmc_coin_id, max(a.last_actual_dt) as last_actual_dt
 select a.cmc_coin_id as 'ID___',
        (select c.cmc_symbol from cmc_coin c where c.cmc_coin_id = a.cmc_coin_id) as 'Symbol___',
        (select c.cmc_name from cmc_coin c where c.cmc_coin_id = a.cmc_coin_id) as 'CoinName____________________',
-       round(a.pc_1h,2) as 'H1____', round(a.pc_24h,2) as 'H24___', round(a.pc_7d,2) as 'D7_____',
+       round(a.pc_1h,2) as 'H1____', round(a.pc_24h,2) as 'H24____', round(a.pc_7d,2) as 'D7_____',
        round(a.volume_usd_24h,0) as 'VOL_______', round(a.price_btc,8) as 'PBTC_______',
        round(a.price_usd,6) as 'PUSD_______', round((50.0 / a.price_usd), 0) as '50AMT_K_',
        round((50000.0 / a.price_usd)/a.volume_usd_24h,2) as 'VOLRatio___'
@@ -35,14 +35,14 @@ select a.cmc_coin_id as ID,
  limit 128;
 
 select ID as 'ID___', Symbol as 'Symbol___', CoinName 'CoinName____________________', H1 as 'H1____',
-       H24 as 'H24___', D7 as 'D7_____', VOL as 'VOL_______', PBTC as 'PBTC_______', PUSD as 'PUSD_______',
+       H24 as 'H24____', D7 as 'D7_____', VOL as 'VOL_______', PBTC as 'PBTC_______', PUSD as 'PUSD_______',
        50AMT_K as '50AMT_K_', VOLRatio as 'VOLRatio___'
   from tmp2 order by VOL desc limit 32;
 
 select a.cmc_coin_id as 'ID___',
        (select c.cmc_symbol from cmc_coin c where c.cmc_coin_id = a.cmc_coin_id) as 'Symbol___',
        (select c.cmc_name from cmc_coin c where c.cmc_coin_id = a.cmc_coin_id) as 'CoinName____________________',
-       round(a.pc_1h,2) as 'H1____', round(a.pc_24h,2) as 'H24___', round(a.pc_7d,2) as 'D7_____',
+       round(a.pc_1h,2) as 'H1____', round(a.pc_24h,2) as 'H24____', round(a.pc_7d,2) as 'D7_____',
        round(a.volume_usd_24h,0) as 'VOL_______', round(a.price_btc,8) as 'PBTC_______',
        round(a.price_usd,6) as 'PUSD_______', round((50.0 / a.price_usd), 0) as '50AMT_K_',
        round((50000.0 / a.price_usd)/a.volume_usd_24h,2) as 'VOLRatio___'
@@ -72,12 +72,12 @@ select a.cmc_coin_id as ID,
  limit 128;
 
 select ID as 'ID___', Symbol as 'Symbol___', CoinName 'CoinName____________________', H1 as 'H1____',
-       H24 as 'H24___', D7 as 'D7_____', VOL as 'VOL_______', PBTC as 'PBTC_______', PUSD as 'PUSD_______',
+       H24 as 'H24____', D7 as 'D7_____', VOL as 'VOL_______', PBTC as 'PBTC_______', PUSD as 'PUSD_______',
        50AMT_K as '50AMT_K_', VOLRatio as 'VOLRatio___'
     from tmp3 order by PUSD limit 32;
 
 select ID as 'ID___', Symbol as 'Symbol___', CoinName 'CoinName____________________', H1 as 'H1____',
-       H24 as 'H24___', D7 as 'D7_____', VOL as 'VOL_______', PBTC as 'PBTC_______', PUSD as 'PUSD_______',
+       H24 as 'H24____', D7 as 'D7_____', VOL as 'VOL_______', PBTC as 'PBTC_______', PUSD as 'PUSD_______',
        50AMT_K as '50AMT_K_', VOLRatio as 'VOLRatio___'
   from tmp3 where VOLRatio < 12.0 order by PUSD limit 32;
 
