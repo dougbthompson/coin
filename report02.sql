@@ -18,8 +18,8 @@ begin
     select cast(json_unquote(x->'$.BCH') as decimal(14,8)) into @num_bch from pol where lst = last_date;
     select cast(json_unquote(x->'$.BTC') as decimal(18,8)) into @num_btc from pol where lst = last_date;
 
-    drop temporary table if exists cmc_tmp_values;
-    create temporary table cmc_tmp_values
+    drop table if exists cmc_tmp_values;
+    create table cmc_tmp_values
     select json_unquote(x->'$.BTC.date_actual') as 'Date Time',
            round(json_unquote(x->'$.DRGN.price_usd'),4) as 'Dragon___',
            round((cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8)) * @num_drgn),2) as DTotal,
@@ -47,7 +47,14 @@ begin
     update cmc_tmp_values
        set ZTotal = DTotal + CTotal;
 
-    select * from cmc_tmp_values order by 1 desc limit 36;
+    # main display statement
+    select min(ztotal) into @min_ztotal from cmc_tmp_values;
+    select 10.0 / (max(ztotal) - min(ztotal)) into @minmax_diff from cmc_tmp_values;
+
+    select a.*,
+           substring('**********', 1, round((a.ztotal - @min_ztotal) * @minmax_diff,0)) as 'Wave______'
+      from cmc_tmp_values a
+     order by 1 desc limit 36;
 
     drop temporary table if exists cmc_tmp_min_max;
     create temporary table cmc_tmp_min_max (
