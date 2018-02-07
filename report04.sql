@@ -1,6 +1,5 @@
 
 --
---
 -- report04: selection criteria reports
 -- candidate coin report
 --
