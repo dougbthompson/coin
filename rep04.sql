@@ -1,6 +1,7 @@
 
 -- 
 -- 
+-- 
 
 create temporary table tmp1
 select a.cmc_coin_id, max(a.last_actual_dt) as last_actual_dt
