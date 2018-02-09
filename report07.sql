@@ -15,12 +15,34 @@ begin
         cmc_symbol  varchar(16),
         index ix01_cmc_choe_list (cmc_d, cmc_symbol)
     );
+    insert into cmc_choe_list values
+          ('2018-02-04',1, 'WTC'),('2018-02-04',1, 'VEN'),
+          ('2018-02-04',1, 'ENG'),('2018-02-04',1, 'QSP'),('2018-02-04',1, 'ICX'),('2018-02-04',1, 'GTO'),
+          ('2018-02-04',1, 'EOS'),('2018-02-04',1, 'POE'),('2018-02-04',1, 'ADA'),('2018-02-04',1, 'XLM'),
+          ('2018-02-04',2, 'ZRX'),('2018-02-04',2,'NANO'),
+          ('2018-02-04',2,'IOTA'),('2018-02-04',2, 'XVG'),('2018-02-04',2, 'RDD'),('2018-02-04',2, 'XRP'),
+          ('2018-02-04',2,'NEBL'),('2018-02-04',2, 'TRX'),('2018-02-04',2, 'XMR'),('2018-02-04',2, 'BTS');
+
+    select max(cmc_d) into @max_date from cmc_choe_list;
+
+    select *
+      from cmc_choe_list
+     where cmc_dt = @max_date
+     order by cmc_ramk, cmc_symbol;
 
 
+    select a.last_actual_dt, round(a.pc_24h,2) as pc_24h,
+           round(a.pc_7d,2) as pc_7d, round(a.price_usd, 8) as price_usd
+      from cmc_data a
+     where a.cmc_coin_id = (
+           select z.cmc_coin_id from cmc_coin z where z.cmc_symbol = 'XLM')
+     order by a.last_actual_dt desc
+     limit 8;
 
 
-
-
+end
+//
+delimiter ;
 
 
 ------------------------------------------------------
