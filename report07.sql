@@ -31,13 +31,15 @@ begin
      order by cmc_ramk, cmc_symbol;
 
 
-    select a.last_actual_dt, round(a.pc_24h,2) as pc_24h,
-           round(a.pc_7d,2) as pc_7d, round(a.price_usd, 8) as price_usd
-      from cmc_data a
-     where a.cmc_coin_id = (
-           select z.cmc_coin_id from cmc_coin z where z.cmc_symbol = 'XLM')
-     order by a.last_actual_dt desc
-     limit 8;
+    select c.cmc_symbol,
+           a.last_actual_dt,
+           round(a.pc_24h,2) as pc_24h,
+           round(a.pc_7d,2) as pc_7d,
+           round(a.price_usd, 8) as price_usd
+
+      from cmc_data a, cmc_coin b, cmc_choe_list c
+     where a.cmc_coin_id = b.cmc_coin_id
+       and b.cmc_symbol  = c.cmc_symbol;
 
 
 end
