@@ -1,7 +1,6 @@
 
 -- 
 -- 
--- 
 -- Choe's list
 -- 2018-02-04
 -- 01 WTC  02 VEN  03 ENG  04 QSP  05 ICX  06 GTO  07 EOS  08 POE  09 ADA  10 XLM
