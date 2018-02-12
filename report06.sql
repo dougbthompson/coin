@@ -101,10 +101,11 @@ delimiter ;
 
 
 -- one day average for BTC = 146
-select round(sum(volume_usd_24h/1000000.0),2) as TradeB,
+select round(sum(volume_usd_24h/1000000.0),2) as TradeM,
        round(avg(pc_1h),2)  as PC01H,
        round(avg(pc_24h),2) as PC24H,
-       round(avg(pc_7d),2)  as PC07D, sum(rank)
+       round(avg(pc_7d),2)  as PC07D,
+       sum(rank)
   from cmc_data
  where last_actual_dt >= '2018-01-16 14:15:00'
    and last_actual_dt  < '2018-01-17 14:15:00'
@@ -147,38 +148,36 @@ select a.last_actual_dt, a.price_usd, b.xdays,
 
 
 select '2018-01-16 00:00:00' into @actual_dt;
-select a.last_actual_dt, a.price_usd,
+select a.last_actual_dt,
+       round(a.price_usd,4) as USD_CUR,
 
-       round(((a.price_usd - (
+--     round(((a.price_usd - (
+--     select b.price_usd
+--       from cmc_data b
+--      where b.last_actual_ts = (a.last_actual_ts - (1 * 3600))
+--        and b.cmc_coin_id    = 146))*100.0)/a.price_usd,6) as D01H,
+
+       -- 4 hour value, difference and percent
+       round((
        select b.price_usd
-         from cmc_data b
-        where b.last_actual_ts = (a.last_actual_ts - (1 * 3600))
-          and b.cmc_coin_id    = 146))*100.0)/a.price_usd) as D01H,
-
+         from cmc_data b 
+        where b.last_actual_ts = (a.last_actual_ts - (4 * 3600))
+          and b.cmc_coin_id    = 146),3) as USD_D04H_PAST,
+       -- 4 hour difference
        round(a.price_usd - (
        select b.price_usd 
          from cmc_data b 
         where b.last_actual_ts = (a.last_actual_ts - (4 * 3600))
-          and b.cmc_coin_id    = 146),2) as D04H,
-       round(a.price_usd - (
-       select b.price_usd
-         from cmc_data b
-        where b.last_actual_ts = (a.last_actual_ts - (8 * 3600))
-          and b.cmc_coin_id    = 146),2) as D08H,
-       round(a.price_usd - (
-       select b.price_usd
-         from cmc_data b
-        where b.last_actual_ts = (a.last_actual_ts - (16 * 3600))
-          and b.cmc_coin_id    = 146),2) as D16H,
-       round(a.price_usd - (
-       select b.price_usd
-         from cmc_data b
-        where b.last_actual_ts = (a.last_actual_ts - (32 * 3600))
-          and b.cmc_coin_id    = 146),2) as D32H
+          and b.cmc_coin_id    = 146),3) as D04H_DIFF,
+       -- 4 hour percent
+       round(((a.price_usd - (
+              select b.price_usd
+                from cmc_data b
+               where b.last_actual_ts = (a.last_actual_ts - (4 * 3600))
+                 and b.cmc_coin_id    = 146))*100.0)/a.price_usd,3) as D04H_PERC
   from cmc_data a
  where a.cmc_coin_id    = 146
-   and a.last_actual_dt = @actual_dt
-;
+   and a.last_actual_dt = @actual_dt;
 
 select sum(a.price_uds)
   from cmc_data a
