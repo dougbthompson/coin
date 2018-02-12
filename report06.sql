@@ -17,6 +17,26 @@
 --     cmc_
 -- ) engine = innodb;
 
+-- CREATE TABLE cmc_dbt100 (
+--  dbt_actual_dt datetime NOT NULL,
+--  dbt_100       double DEFAULT NULL,
+--  dbt_200       double DEFAULT NULL,
+--  PRIMARY KEY (dbt_actual_dt)
+--)
+
+
+insert into cmc_dbt100
+select '2018-02-01 00:00:00',
+       round((
+        select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0)
+          from cmc_data a
+         where a.rank < 101 and a.last_actual_dt = '2018-02-01 00:00:00'),4),
+       round((
+        select sum(b.price_usd * b.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0)
+          from cmc_data b
+         where b.rank < 201 and b.last_actual_dt = '2018-02-01 00:00:00'),4)
+
+
 drop procedure if exists report06;
 delimiter //
 create procedure report06()
@@ -151,12 +171,6 @@ select '2018-01-16 00:00:00' into @actual_dt;
 select a.last_actual_dt,
        round(a.price_usd,4) as USD_CUR,
 
---     round(((a.price_usd - (
---     select b.price_usd
---       from cmc_data b
---      where b.last_actual_ts = (a.last_actual_ts - (1 * 3600))
---        and b.cmc_coin_id    = 146))*100.0)/a.price_usd,6) as D01H,
-
        -- 4 hour value, difference and percent
        round((
        select b.price_usd
@@ -179,14 +193,8 @@ select a.last_actual_dt,
  where a.cmc_coin_id    = 146
    and a.last_actual_dt = @actual_dt;
 
-select sum(a.price_uds)
-  from cmc_data a
- where a.rank           < 101
-   and a.last_actual_dt = @actual_dt
-;
 
-
-select '2018-01-16 00:00:00' into @actual_dt;
+select '2018-02-01 00:00:00' into @actual_dt;
 select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0) as DBT100
   from cmc_data a
  where a.rank           < 101
