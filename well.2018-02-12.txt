@@ -1,0 +1,98 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head id="Head1"><title>
+
+</title>
+    <link type="text/css" rel="Stylesheet" href="/css/20170804/StyleSheet.css" />
+    <style id="companyStyle" type="text/css"></style>
+    <script type="text/javascript" src="/js/jquery-1.9.1.js"></script>
+</head>
+<body>
+<form name="form1" method="post" action="./FullLeaderboard.aspx?eid=45023%3a245" id="form1">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwUJNDY3NTM4NTkzD2QWAgIDD2QWBAIDDxYCHgNzcmMFK34vVXBsb2Fkcy9Db21wYW55TG9nb3MvV2VsbHdvcmtzTG9nb01lZC5wbmdkAgkPDxYCHgRUZXh0BTFZb3VyIHNlc3Npb24gaGFzIHRpbWVkIG91dC4gIFBsZWFzZSBsb2cgaW4gYWdhaW4uZGRkKZbKsRAjsXxoUF4i141mXSVo6xd+q6lpvPlgaijCA10=" />
+
+<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="94C9F0A8" />
+<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEdAAPZhKG9/SOhi5kyyPtwNofFwnbcd4LvKtYC96MzhbbsKPmsWqFUhbxrVmrwSu5Eh1l6LbCTadldeoxdykUuOA+UZvvu8ndZzmaHkNlSh44/xg==" />
+    <input type="hidden" name="hidUser" id="hidUser" />&nbsp;&nbsp;
+    <table>
+        <tr>
+            <td style="width: 100px"><img src="../Uploads/CompanyLogos/WellworksLogoMed.png" id="imgLogo" height="49" alt="Home Page" /></td>
+            <td><span id="lblUser"></span></td></tr>
+    </table>
+    <br />
+    <div>
+        <table>
+            <tr>
+                <td align="center" style="width: 100px">
+                    <span id="lblTitle" style="display:inline-block;"><font size="5"></font></span></td>
+            </tr>
+            <tr>
+                <td style="width: 100px">
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 100px"><span id="lblMsg" style="display:inline-block;"><b>Your session has timed out.  Please log in again.</b></span></td>
+            </tr>
+            <tr>
+                <td align="center" style="width: 100px">
+                </td>
+            </tr>
+        </table>
+        <br />
+    </div>
+
+    <div id="divLeaderboard">
+        <table cellpadding="5" cellspacing="5" >
+            <tr>
+                <td valign="top"  style="text-align: left;width:400px;">
+                    <div id="content3" class="" style="text-align: left;">
+                        <img alt="Leader Board" src="/images/leaderboard2.jpg" style="margin:16px 0;" />
+                        <br />
+                        <input type="hidden" name="hidSortByAverage" id="hidSortByAverage" />
+                        
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <span id="Label1"><b></b></span>
+    </div>
+</form>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        $('.TeamPopupLink').hover(function() {
+            $(this).prev().show();
+        }, function() {
+            $(this).prev().hide();
+        });
+
+        $('.TeamPopupLink').click(function() {
+            $(this).prev().hide();
+            var theDiv = $(this).next();
+            var theDivState = theDiv.css('display');
+            $('.TeamPopup').hide();
+            if (theDivState == 'none') {
+                theDiv.css('display', 'block');
+            }
+            else {
+                theDiv.css('display', 'none');
+            }
+        });
+
+        $('html').click(function(e) {
+            if (!$(e.target).closest('.TeamPopup').length && !$(e.target).is('TeamPopup') && !$(e.target).closest('.TeamPopupLink').length && !$(e.target).is('TeamPopupLink'))  {
+                $('.TeamPopup').hide();
+            }
+        });
+
+    });
+</script> 
+
+
+</body>
+</html>
+
