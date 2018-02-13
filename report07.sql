@@ -4,9 +4,9 @@
 -- 01 WTC  02 VEN  03 ENG  04 QSP  05 ICX  06 GTO  07 EOS  08 POE  09 ADA  10 XLM
 -- 11 ZRX  12 NANO 13 IOTA 14 XVG  15 RDD  16 XRP  17 NEBL 18 TRX  19 XMR  20 BTS
 
-drop procedure if exists report06;
+drop procedure if exists report07;
 delimiter //
-create procedure report06()
+create procedure report07()
 begin
 
     create table if not exists cmc_choe_list (

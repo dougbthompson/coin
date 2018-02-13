@@ -1,5 +1,6 @@
 
 --
+--
 -- report on "beta", correlation with bitcoin, ethereum, top 100 marketcap coins
 --
 
@@ -25,16 +26,28 @@
 --)
 
 
-insert into cmc_dbt100
-select '2018-02-01 00:00:00',
+drop function if exists report06_funcs;
+
+delimiter //
+create function report06_funcs(actual_ts integer)
+returns varchar(1024)
+begin
+
+end
+//
+delimiter ;
+
+replace into cmc_dbt100
+select z.actual_ts, z.actual_dt,
        round((
         select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0)
           from cmc_data a
-         where a.rank < 101 and a.last_actual_dt = '2018-02-01 00:00:00'),4),
+         where a.rank < 101 and a.last_actual_dt = z.actual_dt),4) as Rank100,
        round((
         select sum(b.price_usd * b.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0)
           from cmc_data b
-         where b.rank < 201 and b.last_actual_dt = '2018-02-01 00:00:00'),4)
+         where b.rank < 201 and b.last_actual_dt = z.actual_dt),4) as Rank200
+  from cmc_time z order by z.actual_ts
 
 
 drop procedure if exists report06;
@@ -52,22 +65,15 @@ begin
              from cmc_coin
              where cmc_symbol = 'BTC');
 
-    -- list of available time periods
-    drop temporary table if exists cmc_time;
-    create temporary table cmc_time 
-    select last_actual_dt,
-           last_actual_ts,
-           0 as cmc_coin_id,
-           cast('{"":""}' as json) as x
-      from cmc_data
-     where cmc_coin_id = (
-           select cmc_coin_id
-             from cmc_coin
-            where cmc_symbol = 'BTC')
-      order by last_actual_dt;
+    select max(actual_ts) into @max_actual_ts from cmc_time;
 
-    alter table cmc_time add index ix01_cmc_time (actual_lst, actual_dt);
-    alter table cmc_time add index ix02_cmc_time (actual_dt, actual_lst);
+    -- list of available time periods
+    replace into cmc_time
+    select last_actual_ts, last_actual_dt
+      from cmc_data
+     where last_actual_ts > @max_actual_ts
+       and cmc_coin_id = (select cmc_coin_id from cmc_coin where cmc_symbol = 'BTC')
+     order by last_actual_ts;
 
     -- this needs to be against all time periods, stored in cmc_time?
     -- single time period averages for the top 100 values
