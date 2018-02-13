@@ -1,8 +1,5 @@
 
 --
---
---
---
 -- report on "beta", correlation with bitcoin, ethereum, top 100 marketcap coins
 --
 
@@ -20,12 +17,12 @@
 --     cmc_
 -- ) engine = innodb;
 
--- CREATE TABLE cmc_dbt100 (
---  dbt_actual_dt datetime NOT NULL,
---  dbt_100       double DEFAULT NULL,
---  dbt_200       double DEFAULT NULL,
---  PRIMARY KEY (dbt_actual_dt)
---)
+-- create table cmc_dbt100 (
+--  dbt_actual_dt datetime not     null,
+--  dbt_100       double   default null,
+--  dbt_200       double   default null,
+--  primary key (dbt_actual_dt)
+-- ) engine = innodb;
 
 
 drop function if exists report06_funcs;
@@ -38,19 +35,6 @@ begin
 end
 //
 delimiter ;
-
-replace into cmc_dbt100
-select z.actual_ts, z.actual_dt,
-       round((
-        select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0)
-          from cmc_data a
-         where a.rank < 101 and a.last_actual_dt = z.actual_dt),4) as Rank100,
-       round((
-        select sum(b.price_usd * b.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0)
-          from cmc_data b
-         where b.rank < 201 and b.last_actual_dt = z.actual_dt),4) as Rank200
-  from cmc_time z order by z.actual_ts
-
 
 drop procedure if exists report06;
 delimiter //
@@ -77,7 +61,18 @@ begin
        and cmc_coin_id = (select cmc_coin_id from cmc_coin where cmc_symbol = 'BTC')
      order by last_actual_ts;
 
-    -- this needs to be against all time periods, stored in cmc_time?
+    replace into cmc_dbt100
+    select z.actual_ts, z.actual_dt,
+           round((
+            select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0)
+              from cmc_data a
+             where a.rank < 101 and a.last_actual_dt = z.actual_dt),2),
+           round((
+            select sum(b.price_usd * b.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0)
+              from cmc_data b
+             where b.rank < 201 and b.last_actual_dt = z.actual_dt),2)
+      from cmc_time z order by z.actual_ts;
+
     -- single time period averages for the top 100 values
     select a.last_actual_ts,
            round(sum(a.volume_usd_24h/1000000.0),2) as TradeB,
@@ -90,9 +85,7 @@ begin
      group by a.last_actual_ts;
 
     select a.last_actual_ts,
-           json_object('VOLUME', round(sum(a.volume_usd_24h/1000000.0),2),
-                       'PC01H', round(avg(pc_1h),2)
-           ) as json_value
+           json_object('VOLUME', round(sum(a.volume_usd_24h/1000000.0),2), 'PC01H', round(avg(pc_1h),2)) as json_value
       from cmc_data a, cmc_time b
      where a.last_actual_ts  = b.actual_lst
        and a.rank           <= 100
@@ -127,7 +120,6 @@ end
 //
 delimiter ;
 
-
 -- one day average for BTC = 146
 select round(sum(volume_usd_24h/1000000.0),2) as TradeM,
        round(avg(pc_1h),2)  as PC01H,
@@ -145,7 +137,6 @@ update cmc_time
 insert into xjson(x)
 values ('{"D001H":"1", "D004H":"4", "D008H":"8", "D016H":"16", "D032H":"32",
           "D064H":"64", "D128H":"128", "D256H":"256", "D512H":"512"}');
-
 
 drop temporary table if exists cmc_dates;
 create temporary table cmc_dates (xdates datetime, lst bigint(20));
