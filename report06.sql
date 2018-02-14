@@ -85,8 +85,8 @@ begin
     -- (current) time back hour time periods
     -- cmc_time where actual_dt >= '2018-02-01' and actual_dt < '218-02-02'
 
-    select '2018-02-01 00:00:00' into @actual_dt;
-    select a.last_actual_dt, a.cmc_coin_id, a.price_usd, b.xhours,
+--  select '2018-02-01 00:00:00' into @actual_dt;
+    select a.last_actual_dt, a.cmc_coin_id, round(a.price_usd,2) as price_usd, b.xhours,
            ifnull(round
            (
             (
@@ -99,9 +99,9 @@ begin
            ),0) as Value
       from cmc_data a, cmc_hours b, cmc_time c
      where a.cmc_coin_id    = 146
+       and a.last_actual_dt = c.actual_dt;
+--     and c.actual_dt >= '2018-02-01 00:00:00' and c.actual_dt < '2018-02-01 06:00:00';
 --     and a.last_actual_dt = @actual_dt;
-       and a.last_actual_dt = c.actual_dt
-       and c.actual_dt >= '2018-02-01 00:00:00' and c.actual_dt < '2018-02-01 06:00:00'
 
     --
     select a.last_actual_ts,
