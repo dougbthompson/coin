@@ -81,6 +81,28 @@ begin
     -- calculate for each coin values for the "back" time periods being monitored
     -- 
 
+    -- test case using BTC for log back logic, selecting differences based on the
+    -- (current) time back hour time periods
+    -- cmc_time where actual_dt >= '2018-02-01' and actual_dt < '218-02-02'
+
+    select '2018-02-01 00:00:00' into @actual_dt;
+    select a.last_actual_dt, a.cmc_coin_id, a.price_usd, b.xhours,
+           ifnull(round
+           (
+            (
+             (ifnull(a.price_usd,1) -
+              (select ifnull(z.price_usd,0)
+                 from cmc_data z
+                where z.last_actual_ts = (a.last_actual_ts - (b.xhours * 3600)) and z.cmc_coin_id = 146)
+             ) * 100.0
+            ) / ifnull(a.price_usd,1),2
+           ),0) as Value
+      from cmc_data a, cmc_hours b, cmc_time c
+     where a.cmc_coin_id    = 146
+--     and a.last_actual_dt = @actual_dt;
+       and a.last_actual_dt = c.actual_dt
+       and c.actual_dt >= '2018-02-01 00:00:00' and c.actual_dt < '2018-02-01 06:00:00'
+
     --
     select a.last_actual_ts,
            json_object('VOLUME', round(sum(a.volume_usd_24h/1000000.0),2), 'PC01H', round(avg(pc_1h),2)) as json_value
@@ -142,8 +164,7 @@ select a.last_actual_dt, a.price_usd, b.xhours,
        ),0) as Value
   from cmc_data a, cmc_hours b
  where a.cmc_coin_id    = 146
-   and a.last_actual_dt = @actual_dt
-;
+   and a.last_actual_dt = @actual_dt;
 
 
 
