@@ -1,8 +1,6 @@
 
 --
---
 -- report on "beta", correlation with bitcoin, ethereum, top 100 marketcap coins
---
 
 -- created 2018-01-26 11:00
 -- create table cmc_baseline (
@@ -18,14 +16,14 @@
 --     cmc_
 -- ) engine = innodb;
 
--- create table cmc_dbt100 (
+-- create table cmc_dbt (
 --  dbt_actual_dt datetime not     null,
 --  dbt_100       double   default null,
 --  dbt_200       double   default null,
 --  primary key (dbt_actual_dt)
 -- ) engine = innodb;
 
--- create table cmc_hours (xhours int, primarty key (xhours)) engine = innodb;
+-- create table cmc_hours (xhours int, primary key (xhours)) engine = innodb;
 
 drop procedure if exists report06;
 delimiter //
@@ -45,6 +43,7 @@ begin
     -- resave the list of "look back" hours to calculate
     replace into cmc_hours values (1),(2),(4),(8),(16),(32),(64),(128),(256),(512);
 
+    -- what is the last actual timestamp value?
     select max(actual_ts) into @max_actual_ts from cmc_time;
 
     -- list of available time periods
@@ -56,7 +55,7 @@ begin
      order by last_actual_ts;
 
     -- save off dbt100, dbt200 index values for all time periods
-    replace into cmc_dbt100
+    replace into cmc_dbt
     select z.actual_ts, z.actual_dt,
            round((
             select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0)
@@ -92,6 +91,7 @@ begin
      limit 8;
 
     select cmc_coin_id into @dbt100 from cmc_coin where cmc_symbol = 'DBT100';
+    select cmc_coin_id into @dbt200 from cmc_coin where cmc_symbol = 'DBT200';
 
     # cmc_correlation_hour.nhour
 
@@ -124,32 +124,23 @@ select round(sum(volume_usd_24h/1000000.0),2) as TradeM,
    and last_actual_dt  < '2018-01-17 14:15:00'
    and cmc_coin_id     = 146;
 
-update cmc_time
-   set x = 
-
 insert into xjson(x)
 values ('{"D001H":"1", "D004H":"4", "D008H":"8", "D016H":"16", "D032H":"32",
           "D064H":"64", "D128H":"128", "D256H":"256", "D512H":"512"}');
 
-drop temporary table if exists cmc_dates;
-create temporary table cmc_dates (xdates datetime, lst bigint(20));
-insert into cmc_dates (xdates)
-select ...
-update cmc_dates set lst = unix_timestamp(xdates);
-
-lstd` bigint(20) GENERATED ALWAYS AS (json_unquote(json_extract(`x`,'$.BTC.last_updated'))) VIRTUAL
-
-
-
-
-select '2018-01-25 00:00:00' into @actual_dt;
-select a.last_actual_dt, a.price_usd, b.xdays,
-       round(((a.price_usd - (
-       select b.price_usd
-         from cmc_data b
-        where b.last_actual_ts = (a.last_actual_ts - (b.xdays * 3600))
-          and b.cmc_coin_id    = 146))*100.0)/a.price_usd,2) as Value
-  from cmc_data a, cmc_days b
+select '2018-02-01 00:00:00' into @actual_dt;
+select a.last_actual_dt, a.price_usd, b.xhours,
+       ifnull(round
+       (
+        (
+         (ifnull(a.price_usd,1) -
+          (select ifnull(z.price_usd,0)
+             from cmc_data z
+            where z.last_actual_ts = (a.last_actual_ts - (b.xhours * 3600)) and z.cmc_coin_id = 146)
+         ) * 100.0
+        ) / ifnull(a.price_usd,1),2
+       ),0) as Value
+  from cmc_data a, cmc_hours b
  where a.cmc_coin_id    = 146
    and a.last_actual_dt = @actual_dt
 ;
