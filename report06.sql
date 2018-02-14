@@ -1,5 +1,6 @@
 
 --
+--
 -- report on "beta", correlation with bitcoin, ethereum, top 100 marketcap coins
 --
 
@@ -97,24 +98,18 @@ begin
     # cmc_correlation_hour.nhour
 
     truncate table js4;
-    insert into js4 (x)
+    insert into js4 (actual_ts, x)
     select z.last_actual_ts, cast(z.json_value as json)
       from (
         select a.last_actual_ts,
                json_object('_VOLUME', round(sum(a.volume_usd_24h/1000000.0),2),
-                           'PC01H', round(avg(pc_1h),2)
+                           'PC01H', round(avg(pc_1h),2), 'PC24H', round(avg(pc_24h),2), 'PC07D', round(avg(pc_7d),2)
                ) as json_value
           from cmc_data a, cmc_time b
-         where a.last_actual_ts  = b.actual_lst
+         where a.last_actual_ts  = b.actual_ts
            and a.rank           <= 100
          group by a.last_actual_ts) as z
-
-    -- this needs to be against all time periods, stored in cmc_time?
-    -- calc DBT100 index value for last time target
-    select sum(a.price_usd * a.volume_usd_24h) / (1000.0 * 1000.0 * 1000.0) as DBT100
-      from cmc_data a
-     where a.rank           <= 100
-       and a.last_actual_ts  = @max_time_period;
+     limit 16;
 
 end
 //
