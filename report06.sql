@@ -25,24 +25,14 @@
 --  primary key (dbt_actual_dt)
 -- ) engine = innodb;
 
-
-drop function if exists report06_funcs;
-
-delimiter //
-create function report06_funcs(actual_ts integer)
-returns varchar(1024)
-begin
-
-end
-//
-delimiter ;
+-- create table cmc_hours (xhours int, primarty key (xhours)) engine = innodb;
 
 drop procedure if exists report06;
 delimiter //
 create procedure report06()
 begin
 
-    -- determine start of time periods
+    -- determine start of time periods, not currently used
     select cast(unix_timestamp(min(last_actual_dt)) as unsigned), 
            cast(unix_timestamp(max(last_actual_dt)) as unsigned)
       into @first_time_period, @max_time_period
@@ -51,6 +41,9 @@ begin
            select cmc_coin_id
              from cmc_coin
              where cmc_symbol = 'BTC');
+
+    -- resave the list of "look back" hours to calculate
+    replace into cmc_hours values (1),(2),(4),(8),(16),(32),(64),(128),(256),(512);
 
     select max(actual_ts) into @max_actual_ts from cmc_time;
 
@@ -62,6 +55,7 @@ begin
        and cmc_coin_id = (select cmc_coin_id from cmc_coin where cmc_symbol = 'BTC')
      order by last_actual_ts;
 
+    -- save off dbt100, dbt200 index values for all time periods
     replace into cmc_dbt100
     select z.actual_ts, z.actual_dt,
            round((
@@ -74,7 +68,7 @@ begin
              where b.rank < 201 and b.last_actual_dt = z.actual_dt),2)
       from cmc_time z order by z.actual_ts;
 
-    -- single time period averages for the top 100 values
+    -- calculate volume averages per day for BTC and the dbt100, dbt200 index values
     select a.last_actual_ts,
            round(sum(a.volume_usd_24h/1000000.0),2) as TradeB,
            round(avg(a.pc_1h),2)  as PC01H,
@@ -85,6 +79,10 @@ begin
        and a.rank           <= 100
      group by a.last_actual_ts;
 
+    -- calculate for each coin values for the "back" time periods being monitored
+    -- 
+
+    --
     select a.last_actual_ts,
            json_object('VOLUME', round(sum(a.volume_usd_24h/1000000.0),2), 'PC01H', round(avg(pc_1h),2)) as json_value
       from cmc_data a, cmc_time b
@@ -142,9 +140,6 @@ update cmc_dates set lst = unix_timestamp(xdates);
 lstd` bigint(20) GENERATED ALWAYS AS (json_unquote(json_extract(`x`,'$.BTC.last_updated'))) VIRTUAL
 
 
-drop temporary table if exists cmc_days;
-create temporary table cmc_days (xdays int);
-insert into cmc_days values (1),(2),(4),(8),(16),(32),(64),(128),(256),(512);
 
 
 select '2018-01-25 00:00:00' into @actual_dt;
