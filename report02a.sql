@@ -1,20 +1,37 @@
 
 -- echo -ne "\e[1;32;44m Hello, World! \e[m \n"
--  select 19540.74618207 into @num_drgn;
+-- select 19540.74618207 into @num_drgn;
+
+drop function if exists rep02a_num_coins;
+delimiter //
+
+create function rep02a_num_coins(sym varchar(16))
+returns double
+begin
+
+    select numberofcoins into @value
+      from tmp_list
+     where symbol = sym;
+
+    return @value;
+end
+//
+delimiter ;
 
 drop procedure if exists report02a;
 delimiter //
+
 create procedure report02a(in zhours int)
 begin
-    declare last_date datetime;
 
-    drop table if exists tmp_list;
+    drop temporary table if exists tmp_list;
     create temporary table tmp_list (
         idx            integer auto_increment primary key,
         symbol         varchar(16),
         exchange       varchar(16),
-        numberofcoins  double null,
-        index ix01_tmp_list (symbol, idx)
+        numberofcoins  double         null,
+        widthofvalue   smallint       null,
+        unique index ix01_tmp_list (symbol, idx)
     );
 
     insert into tmp_list (symbol, exchange, numberofcoins)
@@ -23,27 +40,28 @@ begin
            ('TRX','Binance',0.0),  ('POE','Binance',0.0),  ('ENG','Binance',0.0),
            ('DRGN','Kucoin',19540.74618207);
 
-    select max(lst) into last_date from pol;
+    select max(lst) into @last_date from pol;
     select max(idx) into @tmp_idx from tmp_list;
 
     set @idx = 1;
+    set @total = 0;
 
     label1: loop
-        select symbol into @symbol from tmp_list where idx = @idx;
-        set @sql = concat("select cast(json_unquote(x->'$.",@symbol,
-                          "') as decimal(18,8)) into @num_coins from pol where lst = last_date;");
+        select symbol,exchange into @symbol,@exchange from tmp_list where idx = @idx;
+        if @exchange = 'Poloniex' then
+            set @sql = concat("select cast(json_unquote(x->'$.",@symbol,
+                              "') as decimal(18,8)) into @num_coins from pol where lst = '",@last_date,"';");
 
-        prepare stmt1 from @sql;
-        execute stmt1;
-        deallocate prepare stmt1;
+            prepare stmt1 from @sql;
+            execute stmt1;
+            deallocate prepare stmt1;
 
-        update tmp_list
-           set numberofcoins = @num_coins
-         where idx = @idx;
+            update tmp_list set numberofcoins = @num_coins where idx = @idx;
+        end if;
 
         if @idx = @tmp_idx then
             leave label1;
-        end fi;
+        end if;
         set @idx = @idx + 1;
     end loop label1;
 
@@ -74,31 +92,29 @@ begin
     create table cmc_tmp_values
     select json_unquote(x->'$.BTC.date_actual') as 'Date Time',
            round(json_unquote(x->'$.DRGN.price_usd'),3) as 'Dragon___',
-           round((cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8)) * @num_drgn),2) as DTotal,
+           round((cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8)) * rep02a_num_coins('DRGN')),2) as DTotal,
 
            round(json_unquote(x->'$.TRX.price_usd'),3)  as 'Tron____',
            round(json_unquote(x->'$.XLM.price_usd'),3)  as 'Stellar_',
            round(json_unquote(x->'$.XRP.price_usd'),3)  as 'Ripple__',
            round(json_unquote(x->'$.NXT.price_usd'),3)  as 'Next____',
            round(json_unquote(x->'$.ETH.price_usd'),3)  as 'Ethereum',
-           round(json_unquote(x->'$.SC.price_usd'), 3)  as 'Siacoin_',
            round(json_unquote(x->'$.BCH.price_usd'),3)  as 'Bit Cash',
            round(json_unquote(x->'$.BTC.price_usd'),3)  as 'Bitcoin_',
 
            round(
-           (cast(json_unquote(x->'$.XLM.price_usd')  as decimal(18,8)) * @num_xlm) +
-           (cast(json_unquote(x->'$.XRP.price_usd')  as decimal(18,8)) * @num_xrp) +
-           (cast(json_unquote(x->'$.NXT.price_usd')  as decimal(18,8)) * @num_nxt) +
-           (cast(json_unquote(x->'$.ETH.price_usd')  as decimal(18,8)) * @num_eth) +
-           (cast(json_unquote(x->'$.SC.price_usd')   as decimal(18,8)) * @num_sc)  +
-           (cast(json_unquote(x->'$.BCH.price_usd')  as decimal(18,8)) * @num_bch),2) as CTotal,
+           (cast(json_unquote(x->'$.XLM.price_usd')  as decimal(18,8)) * rep02a_num_coins('STR')) +
+           (cast(json_unquote(x->'$.XRP.price_usd')  as decimal(18,8)) * rep02a_num_coins('XRP')) +
+           (cast(json_unquote(x->'$.NXT.price_usd')  as decimal(18,8)) * rep02a_num_coins('NXT')) +
+           (cast(json_unquote(x->'$.ETH.price_usd')  as decimal(18,8)) * rep02a_num_coins('ETH')) +
+           (cast(json_unquote(x->'$.BTC.price_usd')  as decimal(18,8)) * rep02a_num_coins('BTC')) +
+           (cast(json_unquote(x->'$.BCH.price_usd')  as decimal(18,8)) * rep02a_num_coins('BCH')),2) as CTotal,
            cast(0.0 as decimal(18,2)) as ZTotal
       from cmc
      where lst > from_unixtime((unix_timestamp(now()) - (3600 * zhours)))
      order by lst desc;
 
-    update cmc_tmp_values
-       set ZTotal = DTotal + CTotal;
+    update cmc_tmp_values set ZTotal = DTotal + CTotal;
 
     # main display statement
     select min(ztotal) into @min_ztotal from cmc_tmp_values;
@@ -130,15 +146,14 @@ begin
 
     select max(json_unquote(x->'$.BTC.date_actual')) into @curr_datetime from cmc limit 1;
 
-    call proc_store1('DRGN', @start_date, @curr_datetime, @num_drgn);
-    call proc_store1('TRX',  @start_date, @curr_datetime, @num_trx);
-    call proc_store1('XLM',  @start_date, @curr_datetime, @num_xlm);
-    call proc_store1('XRP',  @start_date, @curr_datetime, @num_xrp);  
-    call proc_store1('NXT',  @start_date, @curr_datetime, @num_nxt);
-    call proc_store1('SC',   @start_date, @curr_datetime, @num_sc);
-    call proc_store1('ETH',  @start_date, @curr_datetime, @num_eth);
-    call proc_store1('BCH',  @start_date, @curr_datetime, @num_bch);
-    call proc_store1('BTC',  @start_date, @curr_datetime, @num_btc);
+    call proc_store1('DRGN', @start_date, @curr_datetime, rep02a_num_coins('DRGN'));
+    call proc_store1('TRX',  @start_date, @curr_datetime, rep02a_num_coins('TRX'));
+    call proc_store1('XLM',  @start_date, @curr_datetime, rep02a_num_coins('STR'));
+    call proc_store1('XRP',  @start_date, @curr_datetime, rep02a_num_coins('XRP'));  
+    call proc_store1('NXT',  @start_date, @curr_datetime, rep02a_num_coins('NXT'));
+    call proc_store1('ETH',  @start_date, @curr_datetime, rep02a_num_coins('ETH'));
+    call proc_store1('BCH',  @start_date, @curr_datetime, rep02a_num_coins('BCH'));
+    call proc_store1('BTC',  @start_date, @curr_datetime, rep02a_num_coins('BTC'));
 
     update cmc_tmp_min_max
        set curr_tot = coins * xusd,

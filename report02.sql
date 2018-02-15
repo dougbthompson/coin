@@ -23,16 +23,16 @@ begin
     drop table if exists cmc_tmp_values;
     create table cmc_tmp_values
     select json_unquote(x->'$.BTC.date_actual') as 'Date Time',
-           round(json_unquote(x->'$.DRGN.price_usd'),3) as 'Dragon___',
+           round(json_unquote(x->'$.DRGN.price_usd'),3) as 'Dragon',
            round((cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8)) * @num_drgn),2) as DTotal,
 
-           round(json_unquote(x->'$.TRX.price_usd'),3)  as 'Tron___',
-           round(json_unquote(x->'$.POE.price_usd'),3)  as 'Po.et__',
+           round(json_unquote(x->'$.TRX.price_usd'),3)  as 'Tron__', 
+           round(json_unquote(x->'$.POE.price_usd'),3)  as 'Poe___',
            round(json_unquote(x->'$.XLM.price_usd'),3)  as 'Stellar',
-           round(json_unquote(x->'$.XRP.price_usd'),3)  as 'Ripple_',
-           round(json_unquote(x->'$.NXT.price_usd'),3)  as 'Next___',
+           round(json_unquote(x->'$.XRP.price_usd'),3)  as 'Ripple',
+           round(json_unquote(x->'$.NXT.price_usd'),3)  as 'Next__',
            round(json_unquote(x->'$.ETH.price_usd'),3)  as 'Eth_____',
-           round(json_unquote(x->'$.BCH.price_usd'),3)  as 'Bit Cash',
+           round(json_unquote(x->'$.BCH.price_usd'),3)  as 'Bit Cash_',
            round(json_unquote(x->'$.BTC.price_usd'),3)  as 'Bitcoin__',
 
            round(
@@ -94,7 +94,7 @@ begin
            diff_tot = coins * xdif;
 
     select * from cmc_tmp_min_max order by curr_tot desc;
-    select sum(coins), sum(diff_tot), sum(curr_tot) from cmc_tmp_min_max;
+--  select sum(coins), sum(diff_tot), sum(curr_tot) from cmc_tmp_min_max;
 
 end
 //
