@@ -85,7 +85,7 @@ begin
     -- (current) time back hour time periods
     -- cmc_time where actual_dt >= '2018-02-01' and actual_dt < '218-02-02'
 
---  select '2018-02-01 00:00:00' into @actual_dt;
+    insert into cmc_diff
     select a.last_actual_dt, a.cmc_coin_id, round(a.price_usd,2) as price_usd, b.xhours,
            ifnull(round
            (
@@ -97,11 +97,31 @@ begin
              ) * 100.0
             ) / ifnull(a.price_usd,1),2
            ),0) as Value
-      from cmc_data a, cmc_hours b, cmc_time c
-     where a.cmc_coin_id    = 146
+      from cmc_data a, cmc_hours b, cmc_time c, cmc_coin d
+     where a.cmc_coin_id    = c.cmc_coin_id
        and a.last_actual_dt = c.actual_dt;
 --     and c.actual_dt >= '2018-02-01 00:00:00' and c.actual_dt < '2018-02-01 06:00:00';
 --     and a.last_actual_dt = @actual_dt;
+
+----- test insert
+    insert into cmc_diff
+    select a.last_actual_dt, a.cmc_coin_id, round(a.price_usd,2) as price_usd, b.xhours,
+           ifnull(round
+           (
+            (
+             (ifnull(a.price_usd,1) -
+              (select ifnull(z.price_usd,0)
+                 from cmc_data z
+                where z.last_actual_ts = (a.last_actual_ts - (b.xhours * 3600)) and z.cmc_coin_id = 146)
+             ) * 100.0
+            ) / ifnull(a.price_usd,1),2
+           ),0) as Value
+      from cmc_data a, cmc_hours b, cmc_time c, cmc_coin d
+     where a.cmc_coin_id    = d.cmc_coin_id
+       and a.price_usd      > 0.0
+       and a.last_actual_dt = c.actual_dt
+       and c.actual_dt >= '2018-02-01 00:00:00' and c.actual_dt < '2018-02-02 00:00:00';
+-----
 
     --
     select a.last_actual_ts,
@@ -162,7 +182,7 @@ select a.last_actual_dt, a.price_usd, b.xhours,
          ) * 100.0
         ) / ifnull(a.price_usd,1),2
        ),0) as Value
-  from cmc_data a, cmc_hours b
+  from cmc_data a, cmc_hours b, cmc_coin d
  where a.cmc_coin_id    = 146
    and a.last_actual_dt = @actual_dt;
 
@@ -230,4 +250,6 @@ mysql> select * from cmc_data where cmc_coin_id = 146 limit 16;
 |      147592 |         146 |   1516074863 | 2018-01-15 20:00:00 |     1516075200 | 13210600000.0000 | -0.97 |  -3.99 |  -13.7 |   13179.7 |         1 |    1 |
 +-------------+-------------+--------------+---------------------+----------------+------------------+-------+--------+--------+-----------+-----------+------+
 16 rows in set (0.00 sec)
+
+select a.last_actual_dt, a.cmc_coin_id, round(a.price_usd,2) as price_usd, b.xhours,            ifnull(round            (             (              (ifnull(a.price_usd,1) -               (select ifnull(z.price_usd,0)                  from cmc_data z                 where z.last_actual_ts = (a.last_actual_ts - (b.xhours * 3600)) and z.cmc_coin_id = 146)              ) * 100.0             ) / ifnull(a.price_usd,1),2            ),0) as Value       from cmc_data a, cmc_hours b, cmc_time c, cmc_coin d      where a.cmc_coin_id    = d.cmc_coin_id        and a.last_actual_dt = c.actual_dt         and c.actual_dt >= '2018-02-01 00:00:00' and c.actual_dt < '2018-02-01 01:00:00'
 
