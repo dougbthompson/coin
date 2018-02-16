@@ -28,17 +28,24 @@ begin
     create temporary table tmp_list (
         idx            integer auto_increment primary key,
         symbol         varchar(16),
+        cmc_symbol     varchar(16)    null,
         exchange       varchar(16),
         numberofcoins  double         null,
         widthofvalue   smallint       null,
         unique index ix01_tmp_list (symbol, idx)
     );
 
-    insert into tmp_list (symbol, exchange, numberofcoins)
-    values ('XRP','Poloniex',null),('STR','Poloniex',null),('NXT','Poloniex',null),
-           ('ETH','Poloniex',null),('BCH','Poloniex',null),('BTC','Poloniex',0.0),
-           ('TRX','Binance',0.0),  ('POE','Binance',0.0),  ('ENG','Binance',0.0),
-           ('DRGN','Kucoin',19540.74618207);
+    insert into tmp_list (symbol, cmc_symbol, exchange, numberofcoins)
+    values ('XRP' ,null  ,'Poloniex' ,null),
+           ('STR' ,'XLM' ,'Poloniex' ,null),
+           ('NXT' ,null  ,'Poloniex' ,null),
+           ('ETH' ,null  ,'Poloniex' ,null),
+           ('BCH' ,null  ,'Poloniex' ,null),
+           ('BTC' ,null  ,'Poloniex' ,0.0),
+           ('TRX' ,null  ,'Binance'  ,0.0),
+           ('POE' ,null  ,'Binance'  ,0.0),
+           ('ENG' ,null  ,'Binance'  ,0.0),
+           ('DRGN',null  ,'Kucoin'   ,19540.74618207);
 
     select max(lst) into @last_date from pol;
     select max(idx) into @tmp_idx from tmp_list;
@@ -146,14 +153,27 @@ begin
 
     select max(json_unquote(x->'$.BTC.date_actual')) into @curr_datetime from cmc limit 1;
 
-    call proc_store1('DRGN', @start_date, @curr_datetime, rep02a_num_coins('DRGN'));
-    call proc_store1('TRX',  @start_date, @curr_datetime, rep02a_num_coins('TRX'));
-    call proc_store1('XLM',  @start_date, @curr_datetime, rep02a_num_coins('STR'));
-    call proc_store1('XRP',  @start_date, @curr_datetime, rep02a_num_coins('XRP'));  
-    call proc_store1('NXT',  @start_date, @curr_datetime, rep02a_num_coins('NXT'));
-    call proc_store1('ETH',  @start_date, @curr_datetime, rep02a_num_coins('ETH'));
-    call proc_store1('BCH',  @start_date, @curr_datetime, rep02a_num_coins('BCH'));
-    call proc_store1('BTC',  @start_date, @curr_datetime, rep02a_num_coins('BTC'));
+    select max(idx) into @tmp_idx from tmp_list;
+    set @idx = 1;
+
+    label1: loop
+        select symbol,cmc_symbol into @symbol,@cmc_symbol from tmp_list where idx = @idx;
+
+        if @cmc_symbol is not null then
+            set @sql = concat("call proc_store1('",@cmc_symbol,"', @start_date, @curr_datetime, rep02a_num_coins('",@symbol,"'));");
+        else
+            set @sql = concat("call proc_store1('",@symbol,"', @start_date, @curr_datetime, rep02a_num_coins('",@symbol,"'));");
+        end if;
+
+        prepare stmt2 from @sql;
+        execute stmt2;
+        deallocate prepare stmt2;
+
+        if @idx = @tmp_idx then
+            leave label1;
+        end if;
+        set @idx = @idx + 1;
+    end loop label1;
 
     update cmc_tmp_min_max
        set curr_tot = coins * xusd,
