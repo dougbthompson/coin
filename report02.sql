@@ -1,4 +1,5 @@
 
+-- 
 -- echo -ne "\e[1;32;44m Hello, World! \e[m \n"
 
 drop procedure if exists report02;
@@ -26,11 +27,11 @@ begin
            round(json_unquote(x->'$.DRGN.price_usd'),3) as 'Dragon',
            round((cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8)) * @num_drgn),2) as DTotal,
 
-           round(json_unquote(x->'$.TRX.price_usd'),3)  as 'Tron__', 
-           round(json_unquote(x->'$.POE.price_usd'),3)  as 'Poe___',
-           round(json_unquote(x->'$.XLM.price_usd'),3)  as 'Stellar',
-           round(json_unquote(x->'$.XRP.price_usd'),3)  as 'Ripple',
-           round(json_unquote(x->'$.NXT.price_usd'),3)  as 'Next__',
+           round(json_unquote(x->'$.TRX.price_usd'),4)  as 'Tron___', 
+           round(json_unquote(x->'$.POE.price_usd'),4)  as 'Poe____',
+           round(json_unquote(x->'$.XLM.price_usd'),4)  as 'Stellar',
+           round(json_unquote(x->'$.XRP.price_usd'),4)  as 'Ripple_',
+           round(json_unquote(x->'$.NXT.price_usd'),4)  as 'Next___',
            round(json_unquote(x->'$.ETH.price_usd'),3)  as 'Eth_____',
            round(json_unquote(x->'$.BCH.price_usd'),3)  as 'Bit Cash_',
            round(json_unquote(x->'$.BTC.price_usd'),3)  as 'Bitcoin__',
