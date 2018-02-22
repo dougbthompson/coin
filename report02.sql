@@ -8,9 +8,9 @@ create procedure report02(in zhours int)
 begin
     declare last_date   datetime;
 
-    select 19540.74618207 into @num_drgn;
-    select 0.0 into @num_trx;
-    select 0.0 into @num_poe;
+    select  19540.74618207 into @num_drgn;
+    select 339898.00       into @num_trx;
+    select      0.00       into @num_poe;
 
     select max(lst) into last_date from pol;
 
@@ -38,6 +38,7 @@ begin
 
            round(
            (cast(json_unquote(x->'$.XLM.price_usd')  as decimal(18,8)) * @num_xlm) +
+           (cast(json_unquote(x->'$.TRX.price_usd')  as decimal(18,8)) * @num_trx) +
            (cast(json_unquote(x->'$.XRP.price_usd')  as decimal(18,8)) * @num_xrp) +
            (cast(json_unquote(x->'$.NXT.price_usd')  as decimal(18,8)) * @num_nxt) +
            (cast(json_unquote(x->'$.ETH.price_usd')  as decimal(18,8)) * @num_eth) +
