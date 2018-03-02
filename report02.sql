@@ -2,6 +2,7 @@
 -- 
 -- 
 -- 
+-- 
 -- echo -ne "\e[1;32;44m Hello, World! \e[m \n"
 
 drop procedure if exists report02;
@@ -18,9 +19,7 @@ begin
 
     select cast(json_unquote(x->'$.STR') as decimal(18,8)) into @num_xlm from pol where lst = last_date;
     select cast(json_unquote(x->'$.XRP') as decimal(18,8)) into @num_xrp from pol where lst = last_date;
-    select cast(json_unquote(x->'$.NXT') as decimal(18,8)) into @num_nxt from pol where lst = last_date;
     select cast(json_unquote(x->'$.ETH') as decimal(18,8)) into @num_eth from pol where lst = last_date;
-    select cast(json_unquote(x->'$.BCH') as decimal(18,8)) into @num_bch from pol where lst = last_date;
     select cast(json_unquote(x->'$.BTC') as decimal(18,8)) into @num_btc from pol where lst = last_date;
 
     drop table if exists cmc_tmp_values;
@@ -33,18 +32,15 @@ begin
            round(json_unquote(x->'$.POE.price_usd'),4)  as 'Poe____',
            round(json_unquote(x->'$.XLM.price_usd'),4)  as 'Stellar',
            round(json_unquote(x->'$.XRP.price_usd'),4)  as 'Ripple_',
-           round(json_unquote(x->'$.NXT.price_usd'),4)  as 'Next___',
            round(json_unquote(x->'$.ETH.price_usd'),3)  as 'Eth_____',
-           round(json_unquote(x->'$.BCH.price_usd'),3)  as 'Bit Cash_',
            round(json_unquote(x->'$.BTC.price_usd'),3)  as 'Bitcoin__',
 
            round(
            (cast(json_unquote(x->'$.XLM.price_usd')  as decimal(18,8)) * @num_xlm) +
            (cast(json_unquote(x->'$.TRX.price_usd')  as decimal(18,8)) * @num_trx) +
            (cast(json_unquote(x->'$.XRP.price_usd')  as decimal(18,8)) * @num_xrp) +
-           (cast(json_unquote(x->'$.NXT.price_usd')  as decimal(18,8)) * @num_nxt) +
            (cast(json_unquote(x->'$.ETH.price_usd')  as decimal(18,8)) * @num_eth) +
-           (cast(json_unquote(x->'$.BCH.price_usd')  as decimal(18,8)) * @num_bch),2) as CTotal,
+           0,2) as CTotal,
            cast(0.0 as decimal(18,2)) as ZTotal
       from cmc
      where lst > from_unixtime((unix_timestamp(now()) - (3600 * zhours)))
@@ -88,9 +84,7 @@ begin
     call proc_store1('POE',  @start_date, @curr_datetime, @num_poe);
     call proc_store1('XLM',  @start_date, @curr_datetime, @num_xlm);
     call proc_store1('XRP',  @start_date, @curr_datetime, @num_xrp);  
-    call proc_store1('NXT',  @start_date, @curr_datetime, @num_nxt);
     call proc_store1('ETH',  @start_date, @curr_datetime, @num_eth);
-    call proc_store1('BCH',  @start_date, @curr_datetime, @num_bch);
     call proc_store1('BTC',  @start_date, @curr_datetime, @num_btc);
 
     update cmc_tmp_min_max
