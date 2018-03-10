@@ -13,7 +13,7 @@ begin
 
     select  19540.74618207 into @num_drgn;
     select 339898.00       into @num_trx;
-    select 162382.455      into @num_poe;
+    select 220552.227      into @num_poe;
 
     select max(lst) into last_date from pol;
 
