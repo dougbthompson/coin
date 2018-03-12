@@ -6,7 +6,6 @@
 -- 
 -- 
 -- 
--- 
 -- echo -ne "\e[1;32;44m Hello, World! \e[m \n"
 
 drop procedure if exists report02;
@@ -17,7 +16,7 @@ begin
 
     select  19540.74618207 into @num_drgn;
     select 339898.00       into @num_trx;
-    select 220552.227      into @num_poe;
+    select 233539.227      into @num_poe;
 
     select max(lst) into last_date from pol;
 
@@ -97,7 +96,7 @@ begin
            diff_tot = coins * xdif;
 
     select * from cmc_tmp_min_max order by curr_tot desc;
---  select sum(coins), sum(diff_tot), sum(curr_tot) from cmc_tmp_min_max;
+    select sum(coins), sum(diff_tot), sum(curr_tot) from cmc_tmp_min_max;
 
 end
 //
