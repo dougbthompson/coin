@@ -5,7 +5,6 @@
 -- 
 -- 
 -- 
--- 
 -- echo -ne "\e[1;32;44m Hello, World! \e[m \n"
 -- 
 
@@ -16,7 +15,7 @@ begin
     declare last_date   datetime;
 
     select 19540.74618207  into @num_drgn;
-    select 460107.670      into @num_trx;
+    select 527739.970      into @num_trx;
     select 281764.953      into @num_poe;
     select 113036.850      into @num_ncash;
 
