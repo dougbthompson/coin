@@ -1,10 +1,6 @@
 
 -- 
 -- 
--- 
--- 
--- 
--- 
 -- echo -ne "\e[1;32;44m Hello, World! \e[m \n"
 -- 
 
@@ -16,7 +12,7 @@ begin
 
     select 19540.74618207  into @num_drgn;
     select 527739.970      into @num_trx;
-    select 281764.953      into @num_poe;
+    select 348098.553      into @num_poe;
     select 113036.850      into @num_ncash;
 
     select max(lst) into last_date from pol;
@@ -57,9 +53,10 @@ begin
        set ZTotal = DTotal + CTotal;
 
     # main display statement
-    select min(ztotal) into @min_ztotal from cmc_tmp_values;
     select 10.0 / (max(ztotal) - min(ztotal)) into @minmax_diff from cmc_tmp_values;
 
+    # 1 ---> top display (last 24 hours, 100 records, display last 36
+    select min(ztotal) into @min_ztotal from cmc_tmp_values;
     select a.*,
            substring('**********', 1, round((a.ztotal - @min_ztotal) * @minmax_diff,0)) as 'Wave______'
       from cmc_tmp_values a
