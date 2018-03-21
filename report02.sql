@@ -3,6 +3,7 @@
 -- 
 -- 
 -- 
+-- 
 -- echo -ne "\e[1;32;44m Hello, World! \e[m \n"
 -- 
 
@@ -14,7 +15,7 @@ begin
 
     select 19540.74618207  into @num_drgn;
     select 527739.970      into @num_trx;
-    select 348098.553      into @num_poe;
+    select 411235.353      into @num_poe;
     select 113036.850      into @num_ncash;
 
     select max(lst) into last_date from pol;
