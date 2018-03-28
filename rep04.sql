@@ -37,7 +37,7 @@
        and a.cmc_coin_id    = b.cmc_coin_id
        and a.price_usd      > 0.0
        and a.volume_usd_24h > 10000.0
-     order by a.pc_24h desc
+     order by 5 desc -- a.pc_24h desc
      limit 32;
 
     create temporary table tmp2
@@ -71,7 +71,8 @@
      order by a.pc_24h desc
      limit 128;
 
-    select * from tmp2 order by 'VOL_______' desc limit 32;
+    select * from tmp2 order by 7 desc -- 'VOL_______' desc
+     limit 32;
 
 --  select a.cmc_coin_id as ID,
 --         (select c.cmc_symbol from cmc_coin c where c.cmc_coin_id = a.cmc_coin_id) as Symbol,
@@ -100,7 +101,7 @@
        and a.cmc_coin_id    = b.cmc_coin_id
        and a.price_usd      > 0.0
        and a.volume_usd_24h > 100000.0
-     order by a.pc_24h desc
+     order by 5 desc -- a.pc_24h desc
      limit 32;
 
     create temporary table tmp3
@@ -124,8 +125,16 @@
      order by a.pc_24h desc
      limit 128;
 
-    select * from tmp3 order by 'PUSD_______' limit 32;
-    select * from tmp3 where 'VOLRatio___' < 12.0 order by 'PUSD_______' limit 32;
+    select *
+      from tmp3
+     order by 9 -- 'PUSD_______'
+     limit 32;
+
+    select *
+      from tmp3
+     where 'VOLRatio___' < 12.0
+     order by 9 -- 'PUSD_______'
+     limit 32;
 
 
 -- +-------+---------+------------------------------+--------+--------+---------+------------+-------------+-------------+----------+-------------+
