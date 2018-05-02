@@ -19,19 +19,21 @@ begin
 
     -- "keys" are the list of symbols being tracked
     truncate table js;
-    insert into js (x) select json_keys(x) from cmc limit 1;
+    insert into js (x) -- select json_keys(x) from cmc limit 1;
+    select json_keys(a.x) from cmc a where a.lst = (select max(b.lst) from cmc b) limit 1;
 
     -- the number of symbols
     select json_length(x) into @xlength from js;
 
     -- save away a single "line item", for keys
     truncate table js1; 
-    insert into js1(x) select json_unquote(x->'$.BTC') from cmc limit 1;
+    insert into js1(x) -- select json_unquote(x->'$.BTC') from cmc limit 1;
+    select json_unquote(a.x->'$.BTC') from cmc a where a.lst = (select max(b.lst) from cmc b) limit 1;
 
     -- save away the list of "actual dates", the cron way run
     truncate table js2_date_actual;
-    insert into js2_date_actual
-    select json_unquote(x->'$.BTC.date_actual') from cmc;
+    insert into js2_date_actual -- select json_unquote(x->'$.BTC.date_actual') from cmc;
+    select json_unquote(a.x->'$.BTC.date_actual') from cmc a where a.lst = (select max(b.lst) from cmc b) limit 1;
 
     -- scroll through the list of 1418 symbols
     set @idx = 0;
@@ -74,10 +76,11 @@ begin
 
 select @symbol, @cmc_coin_id, @max_date_actual, @sql;
 
-              set @sql = concat("insert into js3(x) select distinct json_unquote(x->'$.",@symbol,"') from cmc where json_unquote(x->'$.BTC.date_actual') > '",@max_date_actual,"';");
+              set @sql = concat("insert into js3(x) select distinct json_unquote(a.x->'$.",@symbol,
+                                "') from cmc a where json_unquote(a.x->'$.BTC.date_actual') > '",@max_date_actual,"';");
               -- select @sql;
             else
-              set @sql = concat("insert into js3(x) select distinct json_unquote(x->'$.",@symbol,"') from cmc;");
+              set @sql = concat("insert into js3(x) select distinct json_unquote(a.x->'$.",@symbol,"') from cmc a;");
             end if;
             prepare stmt1 from @sql;
             execute stmt1;
