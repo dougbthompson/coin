@@ -12,7 +12,6 @@
 -- 
 -- 
 -- 
--- 
 -- echo -ne "\e[1;32;44m Hello, World! \e[m \n"
 -- 
 
