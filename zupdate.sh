@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd /opt/coin
 typeset -i VAL=`echo $((0 + RANDOM % 8))`
 
 while [ ${VAL} -gt 0 ]
