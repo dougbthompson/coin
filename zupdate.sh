@@ -1,7 +1,15 @@
 #!/bin/bash
 
+typeset -i VAL=$1
+
 cd /opt/coin
-typeset -i VAL=`echo $((0 + RANDOM % 8))`
+
+# echo "Val- ${VAL}) "
+if [ "${VAL}" -eq 0 ]; then
+    typeset -i VAL=`echo $((0 + RANDOM % 8))`
+fi
+# echo "Val- ${VAL}) "
+# echo ""
 
 while [ ${VAL} -gt 0 ]
 do
