@@ -3,8 +3,9 @@
 cd /opt/coins/coinmarketcap
 
 export DT=`date "+%Y-%m-%d-%H-%M"`
+export YR=`date "+%Y"`
 
-export FILE="2018rep05/rpt.${DT}.txt"
+export FILE="${YR}rep05/rpt.${DT}.txt"
 
 cat rep05.sql | mysql --table coins > ${FILE}
 

@@ -5,13 +5,14 @@
 export FILE0=$1
 export ZDATE=$2
 export DT=`date "+%m"`
+export YR=`date "+%Y"`
 cd /opt/coins/coinmarketcap
 
 export FILE1=/tmp/bcp.1
 cat /dev/null > ${FILE1}
 
 # correct FILE2
-export FILE2a="2018bcp/${DT}/cmc"
+export FILE2a="${YR}bcp/${DT}/cmc"
 export FILE2b=`echo ${FILE0} | cut -d'.' -f2`
 export FILE2="${FILE2a}.${FILE2b}.bcp"
 
