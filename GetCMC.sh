@@ -30,6 +30,9 @@ export JSON="${PWD}/${F1}"
 ./GetBCP.sh ${JSON} "${zDT}"
 exit
 
+# New API Key required - Dec 4, 2018, like:
+curl --output ${F1} https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?CMC_PRO_API_KEY=4f555a16-64b4-4ec2-87b7-cbf0a7179c71
+
 # cat ${F1} | tr '\n' ' ' | sed -f sed.sed | sed -e "s/}}/},\"DATE\":\"${zDT}\"}/" > ${BCP}
 # mysql coins -e "LOAD DATA local INFILE '${BCP}' replace INTO TABLE cmc (x);"
 # mysql coins -e "update cmc set lstd = unix_timestamp(lst) where lstd is null;"
