@@ -27,8 +27,8 @@ export zDT="${zYE}-${zMO}-${zDA} ${zHO}:${zMI}"
 
 cat ${F1} | tr '\n' ' ' | sed -f sed.sed | sed -e "s/}}/},\"DATE\":\"${zDT}\"}/" > ${BCP}
 
-mysql coins -e "LOAD DATA local INFILE '${BCP}' replace INTO TABLE mph (x);"
-mysql coins -e "update mph set lstd = unix_timestamp(lst) where lstd is null;"
+# mysql coins -e "LOAD DATA local INFILE '${BCP}' replace INTO TABLE mph (x);"
+# mysql coins -e "update mph set lstd = unix_timestamp(lst) where lstd is null;"
 
 exit
 
