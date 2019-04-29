@@ -18,7 +18,8 @@ export DTD=`date "+%d"`
 
 export F1="cmc/${DTY}_json/${DTM}/${DTD}/cmc.${DT}.json"
 
-curl --output ${F1} https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?CMC_PRO_API_KEY=4f555a16-64b4-4ec2-87b7-cbf0a7179c71
+curl --output ${F1} -d "limit=400" -G https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?CMC_PRO_API_KEY=4f555a16-64b4-4ec2-87b7-cbf0a7179c71
+# curl --output ${F1} -H "X-CMC_PRO_API_KEY: 4f555a16-64b4-4ec2-87b7-cbf0a7179c71" -H "Accept: application/json" -d "start=1&limit=400&convert=USD" -G https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest
 
 export PWD=`pwd`
 # export YR=`echo ${F1} | cut -d'/' -f1`

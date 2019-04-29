@@ -5,10 +5,11 @@
 --  DRGN: 0.101721
 --   POE: 0.005472
 -- NCASH: 0.001963
+-- select lst, json_unquote(x->'$.data[1].symbol') from cmc_api where lst >= '2019-04-25 16:00:00';
 
-drop procedure if exists report02;
+drop procedure if exists report02b;
 delimiter //
-create procedure report02(in zhours int)
+create procedure report02b(in zhours int)
 begin
     declare last_date   datetime;
 
@@ -29,14 +30,13 @@ begin
     select json_unquote(x->'$.BTC.date_actual') as 'Date Time',
            round(json_unquote(x->'$.DRGN.price_usd'),3) as 'Dragon',
 
-        -- round((cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8)) * @num_drgn),2) as DTotal,
-           round((cast('0.101721' as decimal(18,8)) * @num_drgn),2) as DTotal,
-
+           round((cast(json_unquote(x->'$.DRGN.price_usd') as decimal(18,8)) * @num_drgn),2) as DTotal,
+        -- round((cast('0.101721' as decimal(18,8)) * @num_drgn),2) as DTotal,
            round(json_unquote(x->'$.TRX.price_usd'),4)   as 'Tron___', 
-        -- round(json_unquote(x->'$.POE.price_usd'),4)   as 'Poe____',
-           round(json_unquote('0.005472'),4)   as 'Poe____',
-        -- round(json_unquote(x->'$.NCASH.price_usd'),4) as 'NCash__',
-           round(json_unquote('0.001963'),4) as 'NCash__',
+           round(json_unquote(x->'$.POE.price_usd'),4)   as 'Poe____',
+        -- round(json_unquote('0.005472'),4)   as 'Poe____',
+           round(json_unquote(x->'$.NCASH.price_usd'),4) as 'NCash__',
+        -- round(json_unquote('0.001963'),4) as 'NCash__',
            round(json_unquote(x->'$.XLM.price_usd'),4)   as 'Stellar',
            round(json_unquote(x->'$.XRP.price_usd'),4)   as 'Ripple_',
            round(json_unquote(x->'$.ETH.price_usd'),3)   as 'Eth_____',
@@ -50,7 +50,7 @@ begin
            (cast(json_unquote(x->'$.XRP.price_usd')   as decimal(18,8)) * @num_xrp) +
            (cast(json_unquote(x->'$.ETH.price_usd')   as decimal(18,8)) * @num_eth) + 0,2) as CTotal,
            cast(0.0 as decimal(18,2)) as ZTotal
-      from cmc
+      from cmc_api
      where lst > from_unixtime((unix_timestamp(now()) - (3600 * zhours)))
      order by lst desc;
 
@@ -83,12 +83,12 @@ begin
       curr_tot  decimal(18,8)  null);
 
     select unix_timestamp(json_unquote(x->'$.BTC.date_actual')) into @start_date
-      from cmc
+      from cmc_api
      where unix_timestamp(json_unquote(x->'$.BTC.date_actual')) > (unix_timestamp(now()) - (3600 * zhours))
      order by unix_timestamp(json_unquote(x->'$.BTC.date_actual'))
      limit 1;
 
-    select max(json_unquote(x->'$.BTC.date_actual')) into @curr_datetime from cmc limit 1;
+    select max(json_unquote(x->'$.BTC.date_actual')) into @curr_datetime from cmc_api limit 1;
 
     call proc_store1('DRGN',  @start_date, @curr_datetime, @num_drgn);
     call proc_store1('TRX',   @start_date, @curr_datetime, @num_trx);
@@ -113,4 +113,3 @@ delimiter ;
 
 --
 
---
