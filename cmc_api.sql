@@ -18,7 +18,11 @@ begin
     -- select records where greater than [ coins.cmc_api.lstd > max(coins_cmc.capi_time.lts) ]
     declare v_cursor1 cursor for
       select lst, x from coins.cmc_api
-       where lstd > (select max(lts) - (3600 * 12) from coins_cmc.capi_time);
+       where lstd > (
+             select ifnull(max(t.lts),0)
+               from coins_cmc.capi_time t
+              where t.id = (select ifnull(max(time_id),0) from coins_cmc.capi_current)
+             );
 
     select max(lst) into v_lst_max from coins.cmc_api;
     set v_done = 0;
@@ -44,8 +48,11 @@ begin
         fetch v_cursor1 into v_lst, v_json;
         select json_length(v_json->'$.data') into v_data_length; 
 
-        set v_idx = 0;
+        select v_lst, v_data_length
+              ,json_unquote(json_extract(v_json->'$.data', concat('$[0].symbol'))) as Symbol
+              ,json_unquote(json_extract(v_json->'$.data', concat('$[0].last_updated'))) as LastUpdated;
 
+        set v_idx = 0;
         while v_idx < v_data_length
         do
             set @vidx = v_idx;
@@ -59,12 +66,45 @@ begin
             end if;
 
             -- capi_specs
-            select id into v_time_id from coins_cmc.capi_time where lts = v_lst;
+
+            -- capi_current
+            select id into v_time_id   from coins_cmc.capi_time   where ts     = v_lst;
             select id into v_symbol_id from coins_cmc.capi_symbol where symbol = v_symbol;
+
+            -- select
+            --   case when json_unquote(json_extract(x->'$.data', concat('$[','51','].quote.USD.volume_24h'))) = "null" then '0.0'
+            --    end
+            --   from coins.cmc_api where lst = '2019-01-29 06:00:01';
+
+            -- ,(select case when (json_unquote(json_extract(v_json->'$.data',
+            --                     concat('$[',@vidx,'].quote.USD.volume_24h'))) = "null") then '0.0' end)
+
+            insert into coins_cmc.capi_current (time_id, symbol_id, price, market_cap, volume_24h, last_updated,
+                                                percent_change_1h, percent_change_7d, percent_change_24h, rank)
+            select v_time_id
+              ,v_symbol_id
+              ,json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.price')))
+              ,(select case when (json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.market_cap'))) = "null")
+                  then '0.0' else json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.market_cap'))) end)
+              ,(select case when (json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.volume_24h'))) = "null")
+                  then '0.0' else json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.volume_24h'))) end)
+              ,(select case when (json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.last_updated'))) = "null")
+                  then '0.0' else json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.last_updated'))) end)
+              ,(select case when (json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.percent_change_1h'))) = "null")
+                  then '0.0' else json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.percent_change_1h'))) end)
+              ,(select case when (json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.percent_change_7d'))) = "null")
+                  then '0.0' else json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.percent_change_7d'))) end)
+              ,(select case when (json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.percent_change_24h'))) = "null")
+                  then '0.0' else json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].quote.USD.percent_change_24h'))) end)
+              ,(select case when (json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].cmc_rank'))) = "null")
+                  then '0'   else json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].cmc_rank'))) end)
+              from coins.cmc_api
+             where lst = (select ts from coins_cmc.capi_time where id = v_time_id);
 
             set v_idx = v_idx + 1;
         end while;
 
+        -- select v_lst, v_lst_max;
         if v_lst = v_lst_max then set v_done = 1; end if;
     until v_done end repeat;
 
@@ -73,7 +113,7 @@ end
 //
 delimiter ;
 
-call cmc_api_01(0);
+-- call cmc_api_01(0);
 
 -- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
 /*
@@ -102,4 +142,19 @@ mysql> desc coins_cmc.capi_specs;
 -- set @vidx = v_idx;
 -- select json_unquote(json_extract(x->'$.data', concat('$[',@vidx,'].quote.USD.price'))) from cmc_api limit 1;
 -- select json_extract(x->'$.data', '$[0].quote') into @vjson from coins.cmc_api limit 1; select json_extract(@vjson, '$.USD.price');
+
+-- 2019-01-29 06:00:01     100     BTC     2019-01-29T05:54:25.000Z
+-- ERROR 1366 (HY000) at line 101: Incorrect decimal value: 'null' for column 'volume_24h' at row 1
+
+-- mysql> select time_id, count(1) from capi_current group by time_id having count(1) < 100 order by time_id;
+-- +---------+----------+
+-- | time_id | count(1) |
+-- +---------+----------+
+-- |    1790 |       51 |
+-- |    1815 |       34 |
+-- |    2348 |       99 |
+-- |    6312 |       99 |
+-- +---------+----------+
+-- 4 rows in set (0.32 sec)
+
 
