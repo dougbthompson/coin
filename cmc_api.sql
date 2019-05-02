@@ -15,69 +15,49 @@ begin
     declare v_symbol_id   integer;
     declare v_time_id     integer;
 
-    -- select records where greater than [ coins.cmc_api.lstd > max(coins_cmc.capi_time.lts) ]
     declare v_cursor1 cursor for
       select lst, x from coins.cmc_api
        where lstd > (
              select ifnull(max(t.lts),0)
                from coins_cmc.capi_time t
-              where t.id = (select ifnull(max(time_id),0) from coins_cmc.capi_current)
-             );
+              where t.id = (select ifnull(max(time_id),0) from coins_cmc.capi_current));
 
-    select max(lst) into v_lst_max from coins.cmc_api;
-    set v_done = 0;
-
-    -- reset or add to capi_time
-    -- truncate table coins_cmc.capi_time;
+    declare v_cursor2 cursor for
+      select lst, x from coins.cmc_api
+       where lstd > (
+             select ifnull(max(t.lts),0)
+               from coins_cmc.capi_time t
+              where t.id = (select ifnull(max(time_id),0) from coins_cmc.capi_specs));
 
     insert into coins_cmc.capi_time (ts, lts)
     select lst, unix_timestamp(lst)
       from coins.cmc_api
      where unix_timestamp(lst) > (select ifnull(max(lts),0) from coins_cmc.capi_time);
 
-    /*
-    replace into coins_cmc.capi_time (ts, lts) 
-    select substring(json_unquote(x->'$.status.timestamp'),1,19),
-           unix_timestamp(date_format(substring(json_unquote(x->'$.status.timestamp'),1,19),'%Y-%m-%dT%k:%i:%s'))
-      from coins.cmc_api;
-    */
+    select max(lst) into v_lst_max from coins.cmc_api;
+    set v_done = 0;
 
-    -- reset or add to capi_symbol, capi_specs
+    -- reset or add to capi_symbol, capi_current
+    select 'Process new capi_current data...' as 'Which table';
     open v_cursor1;
     repeat
         fetch v_cursor1 into v_lst, v_json;
         select json_length(v_json->'$.data') into v_data_length; 
-
-        select v_lst, v_data_length
-              ,json_unquote(json_extract(v_json->'$.data', concat('$[0].symbol'))) as Symbol
-              ,json_unquote(json_extract(v_json->'$.data', concat('$[0].last_updated'))) as LastUpdated;
 
         set v_idx = 0;
         while v_idx < v_data_length
         do
             set @vidx = v_idx;
             select json_unquote(json_extract(x->'$.data', concat('$[',@vidx,'].symbol'))) into v_symbol
-              from coins.cmc_api
-             where lst = v_lst;
+              from coins.cmc_api where lst = v_lst;
 
             if not exists (select 1 from capi_symbol where symbol = v_symbol) 
-            then
-                insert into coins_cmc.capi_symbol (symbol) values (v_symbol);
+            then insert into coins_cmc.capi_symbol (symbol) values (v_symbol);
             end if;
-
-            -- capi_specs
 
             -- capi_current
             select id into v_time_id   from coins_cmc.capi_time   where ts     = v_lst;
             select id into v_symbol_id from coins_cmc.capi_symbol where symbol = v_symbol;
-
-            -- select
-            --   case when json_unquote(json_extract(x->'$.data', concat('$[','51','].quote.USD.volume_24h'))) = "null" then '0.0'
-            --    end
-            --   from coins.cmc_api where lst = '2019-01-29 06:00:01';
-
-            -- ,(select case when (json_unquote(json_extract(v_json->'$.data',
-            --                     concat('$[',@vidx,'].quote.USD.volume_24h'))) = "null") then '0.0' end)
 
             insert into coins_cmc.capi_current (time_id, symbol_id, price, market_cap, volume_24h, last_updated,
                                                 percent_change_1h, percent_change_7d, percent_change_24h, rank)
@@ -103,12 +83,61 @@ begin
 
             set v_idx = v_idx + 1;
         end while;
-
-        -- select v_lst, v_lst_max;
         if v_lst = v_lst_max then set v_done = 1; end if;
     until v_done end repeat;
-
     close v_cursor1;
+
+
+    -- reset or add to capi_symbol, capi_specs
+    select 'Process new capi_recs data...' as 'Which table';
+    set v_done = 0;
+    open v_cursor2;
+    repeat
+        fetch v_cursor2 into v_lst, v_json;
+        select json_length(v_json->'$.data') into v_data_length;
+
+        set v_idx = 0;
+        while v_idx < v_data_length
+        do
+            set @vidx = v_idx;
+            select json_unquote(json_extract(x->'$.data', concat('$[',@vidx,'].symbol'))) into v_symbol
+              from coins.cmc_api where lst = v_lst;
+
+            if not exists (select 1 from capi_symbol where symbol = v_symbol)
+            then insert into coins_cmc.capi_symbol (symbol) values (v_symbol);
+            end if;
+
+            -- capi_specs
+            select id into v_time_id   from coins_cmc.capi_time   where ts     = v_lst;
+            select id into v_symbol_id from coins_cmc.capi_symbol where symbol = v_symbol;
+
+            insert into coins_cmc.capi_specs (time_id, symbol_id, dataid, platformid, name, token_address, date_added,
+                        last_updated, max_supply, total_supply, num_pairs, circulating)
+            select v_time_id
+              ,v_symbol_id
+              ,json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].id')))
+              ,json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].platform.id')))
+              ,json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].name')))
+              ,json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].platform.token_address')))
+              ,json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].date_added')))
+              ,json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].last_updated')))
+              ,(select case when (json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].max_supply'))) = "null")
+                  then '0' else json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].max_supply'))) end)
+              ,(select case when (json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].total_supply'))) = "null")
+                  then '0' else json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].total_supply'))) end)
+              ,(select case when (json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].num_market_pairs'))) = "null")
+                  then '0' else json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].num_market_pairs'))) end)
+              ,(select case when (json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].circulating_supply'))) = "null")
+                  then '0' else json_unquote(json_extract(v_json->'$.data', concat('$[',@vidx,'].circulating_supply'))) end)
+              from coins.cmc_api
+             where lst = (select ts from coins_cmc.capi_time where id = v_time_id);
+
+            set v_idx = v_idx + 1;
+        end while;
+        if v_lst = v_lst_max then set v_done = 1; end if;
+    until v_done end repeat;
+    close v_cursor2;
+
 end
 //
 delimiter ;
@@ -136,25 +165,8 @@ mysql> desc coins_cmc.capi_specs;
 +---------------+--------------+------+-----+---------+-------+
 */
 
--- select json_unquote(v_json->'$.data[0].symbol') into v_symbol;
--- select json_unquote(json_extract(x->'$.data', concat('$[',@val,'].symbol'))) from cmc_api;
 
--- set @vidx = v_idx;
--- select json_unquote(json_extract(x->'$.data', concat('$[',@vidx,'].quote.USD.price'))) from cmc_api limit 1;
--- select json_extract(x->'$.data', '$[0].quote') into @vjson from coins.cmc_api limit 1; select json_extract(@vjson, '$.USD.price');
 
--- 2019-01-29 06:00:01     100     BTC     2019-01-29T05:54:25.000Z
--- ERROR 1366 (HY000) at line 101: Incorrect decimal value: 'null' for column 'volume_24h' at row 1
 
--- mysql> select time_id, count(1) from capi_current group by time_id having count(1) < 100 order by time_id;
--- +---------+----------+
--- | time_id | count(1) |
--- +---------+----------+
--- |    1790 |       51 |
--- |    1815 |       34 |
--- |    2348 |       99 |
--- |    6312 |       99 |
--- +---------+----------+
--- 4 rows in set (0.32 sec)
 
 
