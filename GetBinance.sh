@@ -14,6 +14,6 @@ echo ${DT}
 
 for SYM in `echo "POEETH POEBTC XLMETH XLMBTC TRXETH TRXBTC XRPETH XRPBTC BTCUSDT"`
 do
-    curl --output "Bin/${YE}/${MO}/${DA}/bin.${DT}.${SYM}.txt" -s "https://api.binance.com/api/v1/ticker/24hr?symbol=${SYM}"
+    curl --output "bin/${YE}/${MO}/${DA}/bin.${DT}.${SYM}.txt" -s "https://api.binance.com/api/v1/ticker/24hr?symbol=${SYM}"
 done
 
