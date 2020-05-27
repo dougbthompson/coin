@@ -18,12 +18,12 @@ begin
     select 411235.353      into @num_poe;
     select 113036.850      into @num_ncash;
 
-    select max(lst) into last_date from pol;
+    select max(lst) into last_date from cmc_api;
 
-    select cast(json_unquote(x->'$.STR') as decimal(18,8)) into @num_xlm from pol where lst = last_date;
-    select cast(json_unquote(x->'$.XRP') as decimal(18,8)) into @num_xrp from pol where lst = last_date;
-    select cast(json_unquote(x->'$.ETH') as decimal(18,8)) into @num_eth from pol where lst = last_date;
-    select cast(json_unquote(x->'$.BTC') as decimal(18,8)) into @num_btc from pol where lst = last_date;
+    select cast(json_unquote(x->'$.STR') as decimal(18,8)) into @num_xlm from cmc_api where lst = last_date;
+    select cast(json_unquote(x->'$.XRP') as decimal(18,8)) into @num_xrp from cmc_api where lst = last_date;
+    select cast(json_unquote(x->'$.ETH') as decimal(18,8)) into @num_eth from cmc_api where lst = last_date;
+    select cast(json_unquote(x->'$.BTC') as decimal(18,8)) into @num_btc from cmc_api where lst = last_date;
 
     drop table if exists cmc_tmp_values;
     create table cmc_tmp_values
@@ -56,8 +56,7 @@ begin
 
     select * from cmc_tmp_values;
 
-    update cmc_tmp_values
-       set ZTotal = DTotal + CTotal;
+    update cmc_tmp_values set ZTotal = DTotal + CTotal;
 
     # main display statement
     select 10.0 / (max(ztotal) - min(ztotal)) into @minmax_diff from cmc_tmp_values;
