@@ -12,7 +12,7 @@ export MO=`date "+%m"`
 export DA=`date "+%d"`
 echo ${DT}
 
-for SYM in `echo "POEETH POEBTC XLMETH XLMBTC TRXETH TRXBTC XRPETH XRPBTC BTCUSDT"`
+for SYM in `echo "XLMETH XLMBTC TRXETH TRXBTC XRPETH XRPBTC BTCUSDT"`
 do
     curl --output "bin/${YE}/${MO}/${DA}/bin.${DT}.${SYM}.txt" -s "https://api.binance.com/api/v1/ticker/24hr?symbol=${SYM}"
 done
