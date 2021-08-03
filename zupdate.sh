@@ -3,7 +3,7 @@
 cd /opt/coin
 
 typeset -i RAN=`echo $((1 + $RANDOM % 10))`
-if [ ${RAN} -gt 6 ]; then 
+if [ ${RAN} -gt 8 ]; then 
     exit
 fi
 
